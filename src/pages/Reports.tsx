@@ -30,7 +30,7 @@ export function Reports() {
   // Filter States
   const [datePreset, setDatePreset] = useState<DatePreset>('month');
   const [dateRange, setDateRange] = useState({
-    start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    start: new Date(new Date().setDate(new Date().getDate() - 29)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
   });
   const [selectedRoom, setSelectedRoom] = useState<string>('all');
@@ -61,9 +61,9 @@ export function Reports() {
     if (datePreset === 'today') {
       startDate = today;
     } else if (datePreset === 'week') {
-      startDate.setDate(today.getDate() - 6); // This week including today
+      startDate.setDate(today.getDate() - 6);
     } else if (datePreset === 'month') {
-      startDate.setDate(today.getDate() - 29); // This month including today
+      startDate.setDate(today.getDate() - 29);
     }
     
     if (datePreset !== 'custom') {
@@ -86,13 +86,6 @@ export function Reports() {
       payment_status_param: paymentStatus,
       discount_status_param: discountStatus,
     };
-    
-    // Parameters for functions that only accept basic parameters
-    const basicParams = {
-      company_id_param: companyId,
-      start_date: dateRange.start,
-      end_date: dateRange.end,
-    };
 
     try {
       const [
@@ -105,8 +98,8 @@ export function Reports() {
         supabase.rpc('get_daily_booking_stats', rpcParams),
         supabase.rpc('get_room_stats', rpcParams),
         supabase.rpc('get_financial_summary', rpcParams),
-        supabase.rpc('get_discount_report', basicParams),
-        supabase.rpc('get_occupancy_report', basicParams),
+        supabase.rpc('get_discount_report', { ...rpcParams, discount_status_param: undefined }),
+        supabase.rpc('get_occupancy_report', { ...rpcParams, payment_status_param: undefined, discount_status_param: undefined }),
       ]);
 
       if (dailyStatsResult.error) throw dailyStatsResult.error;
@@ -159,7 +152,7 @@ export function Reports() {
   const summaryCards = [
     { title: 'Total Revenue', value: formatCurrency(summary.totalRevenue), icon: DollarSign, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
     { title: 'Total Bookings', value: summary.totalBookings.toString(), icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-    { title: 'Total Rooms Booked', value: summary.totalRoomsBooked.toString(), icon: DoorOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
+    { title: 'Rooms with Bookings', value: summary.totalRoomsBooked.toString(), icon: DoorOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
     { title: 'New Customers', value: summary.newCustomers.toString(), icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' },
     { title: 'Occupancy Rate', value: `${(occupancyReport?.occupancy_rate || 0).toFixed(1)}%`, icon: TrendingUp, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
   ];
