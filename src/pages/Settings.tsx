@@ -4,12 +4,13 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { CompanyUser } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export function Settings() {
   const { user, companyId, signOut } = useAuth();
   const { company, updateCompany } = useCompany(companyId);
   const navigate = useNavigate();
+  const location = useLocation();
   const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,6 +52,12 @@ export function Settings() {
       fetchCompanyUsers();
     }
   }, [companyId]);
+  
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
 
   const fetchCompanyUsers = async () => {
     if (!companyId) return;
@@ -437,7 +444,7 @@ export function Settings() {
               </div>
             </div>
           )}
-
+          
           {activeTab === 'plans' && (
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
