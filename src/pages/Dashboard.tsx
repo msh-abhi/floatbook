@@ -1,369 +1,527 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, DollarSign, Users, TrendingUp, Clock, Plus, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Building2, Users, LogOut, Mail, Trash2, UserPlus, Settings as SettingsIcon, CreditCard, Crown, Key, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
-import { Booking, Room } from '../types';
+import { CompanyUser } from '../types';
+import { useNavigate } from 'react-router-dom';
 
-export function Dashboard() {
-  const { companyId } = useAuth();
-  const { company } = useCompany(companyId);
+export function Settings() {
+  const { user, companyId, signOut } = useAuth();
+  const { company, updateCompany } = useCompany(companyId);
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalBookings: 0,
-    todayBookings: 0,
-    occupancyRate: 0,
-  });
-  const [todayBookings, setTodayBookings] = useState<(Booking & { room: Room })[]>([]);
-  const [upcomingBookings, setUpcomingBookings] = useState<(Booking & { room: Room })[]>([]);
-  const [activeTab, setActiveTab] = useState<'today' | 'upcoming'>('today');
+  const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'company' | 'team' | 'email' | 'payment' | 'plans'>('company');
+  
+  const [companyForm, setCompanyForm] = useState({
+    name: '',
+    logo_url: '',
+    address: '',
+    currency: 'USD',
+  });
+
+  const [emailSettings, setEmailSettings] = useState({
+    brevo_api_key: '',
+  });
+  
+  const [paymentSettings, setPaymentSettings] = useState({
+    stripe_secret_key: '',
+    paypal_client_id: '',
+    bkash_merchant_id: '',
+  });
+  
+  const [inviteEmail, setInviteEmail] = useState('');
+
+  useEffect(() => {
+    if (company) {
+      setCompanyForm({
+        name: company.name || '',
+        logo_url: company.logo_url || '',
+        address: company.address || '',
+        currency: company.currency || 'USD',
+      });
+    }
+  }, [company]);
 
   useEffect(() => {
     if (companyId) {
-      fetchDashboardData();
+      fetchCompanyUsers();
     }
   }, [companyId]);
 
-  const fetchDashboardData = async () => {
+  const fetchCompanyUsers = async () => {
     if (!companyId) return;
-
     try {
-      setLoading(true);
-
-      // Get today's date
-      const today = new Date().toISOString().split('T')[0];
-
-      // Fetch bookings with room data
-      const { data: bookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          room:rooms(*)
-        `)
-        .eq('company_id', companyId);
-
-      if (bookingsError) throw bookingsError;
-
-      // Fetch rooms for calculating occupancy
-      const { data: rooms, error: roomsError } = await supabase
-        .from('rooms')
+      const { data, error } = await supabase
+        .from('company_users')
         .select('*')
         .eq('company_id', companyId);
 
-      if (roomsError) throw roomsError;
-
-      // Calculate stats
-      const totalRevenue = bookings?.reduce((sum, booking) => sum + Number(booking.total_amount), 0) || 0;
-      const totalBookings = bookings?.length || 0;
-      const todayBookingsData = bookings?.filter(booking => booking.check_in_date === today) || [];
-      const todayBookingsCount = todayBookingsData.length;
-      
-      // Calculate occupancy rate (today's bookings / total rooms)
-      const occupancyRate = rooms?.length ? (todayBookingsCount / rooms.length) * 100 : 0;
-
-      // Get upcoming bookings (next 7 days)
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      const nextWeekStr = nextWeek.toISOString().split('T')[0];
-
-      const upcomingBookingsData = bookings?.filter(booking => 
-        booking.check_in_date > today && booking.check_in_date <= nextWeekStr
-      ).sort((a, b) => new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime()) || [];
-
-      setStats({
-        totalRevenue,
-        totalBookings,
-        todayBookings: todayBookingsCount,
-        occupancyRate,
-      });
-
-      setTodayBookings(todayBookingsData);
-      setUpcomingBookings(upcomingBookingsData.slice(0, 5)); // Show next 5
-
+      if (error) throw error;
+      setCompanyUsers(data || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching company users:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const togglePaymentStatus = async (booking: Booking) => {
+  const handleUpdateCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ is_paid: !booking.is_paid })
-        .eq('id', booking.id);
+      const { error } = await updateCompany({
+        name: companyForm.name,
+        logo_url: companyForm.logo_url || null,
+        address: companyForm.address || null,
+        currency: companyForm.currency,
+      });
 
-      if (error) throw error;
-      fetchDashboardData();
+      if (error) {
+        alert('Error updating company. Please try again.');
+      } else {
+        alert('Company information updated successfully!');
+        window.location.reload();
+      }
     } catch (error) {
-      console.error('Error updating payment status:', error);
+      console.error('Error updating company:', error);
+      alert('Error updating company. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const handleInviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!companyId || !inviteEmail.trim()) return;
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const formatDateRange = (checkIn: string, checkOut: string) => {
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    
-    if (checkInDate.toDateString() === checkOutDate.toDateString()) {
-      return formatDate(checkIn);
+    try {
+      alert(`Invitation would be sent to ${inviteEmail}. This feature requires email service integration.`);
+      setInviteEmail('');
+      setShowInviteModal(false);
+    } catch (error) {
+      console.error('Error inviting user:', error);
+      alert('Error sending invitation. Please try again.');
     }
-    
-    return `${formatDate(checkIn)} - ${formatDate(checkOut)}`;
   };
+
+  const handleSignOut = async () => {
+    if (confirm('Are you sure you want to sign out?')) {
+      await signOut();
+      navigate('/auth');
+    }
+  };
+
+  const tabs = [
+    { id: 'company', name: 'Company Info', icon: Building2 },
+    { id: 'team', name: 'Team Members', icon: Users },
+    { id: 'email', name: 'Email Settings', icon: Mail },
+    { id: 'payment', name: 'Payment Methods', icon: CreditCard },
+    { id: 'plans', name: 'Subscription Plans', icon: Crown },
+  ];
+
+  const plans = [
+    { name: 'Free Plan', price: '$0', period: '/month', features: ['2 rooms', '10 bookings/month', 'Basic support'], current: true, color: 'gray' },
+    { name: 'Basic Plan', price: '$29', period: '/month', features: ['10 rooms', '50 bookings/month', 'Email support', 'Analytics'], current: false, color: 'blue' },
+    { name: 'Pro Plan', price: '$99', period: '/month', features: ['Unlimited rooms', 'Unlimited bookings', 'Priority support', 'Advanced analytics', 'API access'], current: false, color: 'purple' },
+  ];
 
   if (loading) {
     return (
       <div className="p-4 lg:p-8">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-64"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white p-6 rounded-xl shadow-sm border h-32"></div>
-            ))}
+          <div className="space-y-4">
+            <div className="bg-white p-6 rounded-xl shadow-sm border h-48"></div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border h-48"></div>
           </div>
         </div>
       </div>
     );
   }
 
-  const statCards = [
-    {
-      title: 'Total Revenue',
-      value: formatCurrency(stats.totalRevenue),
-      icon: DollarSign,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-    },
-    {
-      title: 'Total Bookings',
-      value: stats.totalBookings.toString(),
-      icon: Calendar,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-    },
-    {
-      title: "Today's Bookings",
-      value: stats.todayBookings.toString(),
-      icon: Clock,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-    },
-    {
-      title: 'Occupancy Rate',
-      value: `${stats.occupancyRate.toFixed(1)}%`,
-      icon: TrendingUp,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
-    },
-  ];
-
   return (
-    <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back{company ? `, ${company.name}` : ''}
-          </h1>
-          <p className="text-gray-600">
-            Here's what's happening with your bookings today.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate('/bookings')}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 self-start"
-        >
-          <Plus className="h-5 w-5" />
-          New Booking
-        </button>
+    <div className="p-4 lg:p-8 max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+        <p className="text-gray-600">Manage your company settings and preferences.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.title} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="lg:w-64">
+          <nav className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="font-medium">{tab.name}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="flex-1">
+          {activeTab === 'company' && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  Company Information
+                </h2>
+              </div>
+              <div className="p-6">
+                <form onSubmit={handleUpdateCompany} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-2">
+                        Company Name *
+                      </label>
+                      <input
+                        id="company_name"
+                        type="text"
+                        value={companyForm.name}
+                        onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                        Address
+                      </label>
+                      <input
+                        id="address"
+                        type="text"
+                        value={companyForm.address}
+                        onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Company address"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="company_currency" className="block text-sm font-medium text-gray-700 mb-2">
+                      Currency
+                    </label>
+                    <select
+                      id="company_currency"
+                      value={companyForm.currency}
+                      onChange={(e) => setCompanyForm({ ...companyForm, currency: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="BDT">BDT (৳)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="EUR">EUR (€)</option>
+                    </select>
+                    <p className="text-xs text-red-500 mt-1">Note: This only changes the currency symbol. No amounts will be converted.</p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 mb-2">
+                      Logo URL
+                    </label>
+                    <div className="flex gap-3">
+                      <input
+                        id="logo_url"
+                        type="url"
+                        value={companyForm.logo_url}
+                        onChange={(e) => setCompanyForm({ ...companyForm, logo_url: e.target.value })}
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="https://example.com/logo.png"
+                      />
+                      {companyForm.logo_url && (
+                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                          <img
+                            src={companyForm.logo_url}
+                            alt="Logo preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'team' && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-purple-600" />
+                    Team Members
+                  </h2>
+                  <button
+                    onClick={() => setShowInviteModal(true)}
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Invite User
+                  </button>
                 </div>
-                <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
-                  <Icon className="h-6 w-6" />
+              </div>
+              <div className="p-6">
+                {companyUsers.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No team members yet</h3>
+                    <p className="text-gray-600">Invite your first team member to get started.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {companyUsers.map((companyUser) => (
+                      <div key={companyUser.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <span className="text-white text-lg font-semibold">
+                              {companyUser.user_email?.charAt(0).toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {companyUser.user_email || 'Unknown User'}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600 capitalize">{companyUser.role}</span>
+                              {companyUser.user_id === user?.id && (
+                                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-medium">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {companyUser.user_id !== user?.id && (
+                          <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'email' && (
+             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-emerald-600" />
+                  Email Settings
+                </h2>
+              </div>
+              <div className="p-6">
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="brevo_api_key" className="block text-sm font-medium text-gray-700 mb-2">
+                      Brevo API Key
+                    </label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        id="brevo_api_key"
+                        type="password"
+                        value={emailSettings.brevo_api_key}
+                        onChange={(e) => setEmailSettings({ ...emailSettings, brevo_api_key: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                        placeholder="Enter your Brevo API key"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Used for sending booking confirmations and notifications.
+                    </p>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-700">
+                      <strong>Note:</strong> Email settings are stored securely and used for automated notifications.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Bookings Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-100">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('today')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'today'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Today's Bookings ({todayBookings.length})
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('upcoming')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'upcoming'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Upcoming Bookings ({upcomingBookings.length})
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === 'today' ? (
-            todayBookings.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No bookings for today</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {todayBookings.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <p className="font-medium text-gray-900">{booking.customer_name}</p>
-                        <span className="text-sm text-gray-500">•</span>
-                        <p className="text-sm text-gray-600">{booking.room?.name}</p>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {formatDateRange(booking.check_in_date, booking.check_out_date)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount))}</p>
-                        {booking.advance_paid > 0 && (
-                          <p className="text-xs text-gray-500">
-                            Advance: {formatCurrency(Number(booking.advance_paid))}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => togglePaymentStatus(booking)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
-                          booking.is_paid
-                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                            : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                        }`}
+          )}
+          
+          {activeTab === 'plans' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="p-6 border-b border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-yellow-600" />
+                    Subscription Plans
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {plans.map((plan) => (
+                      <div
+                        key={plan.name}
+                        className={`relative rounded-xl border-2 p-6 ${
+                          plan.current
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        } transition-all`}
                       >
-                        {booking.is_paid ? (
-                          <>
-                            <CheckCircle className="h-3 w-3" />
-                            Paid
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-3 w-3" />
-                            Mark Paid
-                          </>
+                        {plan.current && (
+                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                              Current Plan
+                            </span>
+                          </div>
                         )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : (
-            upcomingBookings.length === 0 ? (
-              <div className="text-center py-8">
-                <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No upcoming bookings</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {upcomingBookings.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <p className="font-medium text-gray-900">{booking.customer_name}</p>
-                        <span className="text-sm text-gray-500">•</span>
-                        <p className="text-sm text-gray-600">{booking.room?.name}</p>
+                        
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{plan.name}</h3>
+                          <div className="mb-4">
+                            <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
+                            <span className="text-gray-600">{plan.period}</span>
+                          </div>
+                          
+                          <ul className="space-y-2 mb-6 text-sm text-gray-600">
+                            {plan.features.map((feature, index) => (
+                              <li key={index} className="flex items-center gap-2">
+                                <Zap className="h-4 w-4 text-emerald-500" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                          
+                          {!plan.current && (
+                            <button
+                              className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
+                                plan.color === 'blue'
+                                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                  : plan.color === 'purple'
+                                  ? 'bg-purple-600 text-white hover:bg-purple-700'
+                                  : 'bg-gray-600 text-white hover:bg-gray-700'
+                              }`}
+                            >
+                              Upgrade
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-500">
-                        {formatDateRange(booking.check_in_date, booking.check_out_date)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount))}</p>
-                        {booking.advance_paid > 0 && (
-                          <p className="text-xs text-gray-500">
-                            Advance: {formatCurrency(Number(booking.advance_paid))}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => togglePaymentStatus(booking)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
-                          booking.is_paid
-                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                            : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                        }`}
-                      >
-                        {booking.is_paid ? (
-                          <>
-                            <CheckCircle className="h-3 w-3" />
-                            Paid
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-3 w-3" />
-                            Mark Paid
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-            )
+
+              {/* Account Section */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="p-6 border-b border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-900">Account</h2>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">Signed in as</h3>
+                      <p className="text-sm text-gray-600">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
+
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900">Invite Team Member</h2>
+            </div>
+
+            <form onSubmit={handleInviteUser} className="p-6 space-y-4">
+              <div>
+                <label htmlFor="invite_email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    id="invite_email"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="colleague@company.com"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700">
+                  <strong>Note:</strong> This is a demo feature. In a production environment,
+                  this would send an invitation email to the user.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowInviteModal(false);
+                    setInviteEmail('');
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  Send Invitation
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
