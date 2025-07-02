@@ -41,7 +41,7 @@ export function Reports() {
   useEffect(() => {
     const fetchRooms = async () => {
       if (!companyId) return;
-      const { data } = await supabase.from('rooms').select('*').eq('company_id', companyId);
+      const { data } = await supabase.from('rooms').select('*').eq('company_id', companyId).order('name');
       setRooms(data || []);
     };
     fetchRooms();
@@ -61,9 +61,9 @@ export function Reports() {
     if (datePreset === 'today') {
       startDate = today;
     } else if (datePreset === 'week') {
-      startDate.setDate(today.getDate() - 7);
+      startDate.setDate(today.getDate() - 6); // This week including today
     } else if (datePreset === 'month') {
-      startDate.setDate(today.getDate() - 30);
+      startDate.setDate(today.getDate() - 29); // This month including today
     }
     
     if (datePreset !== 'custom') {
@@ -86,6 +86,20 @@ export function Reports() {
       payment_status_param: paymentStatus,
       discount_status_param: discountStatus,
     };
+    
+    // Parameters for functions that don't use all filters
+    const occupancyParams = {
+        company_id_param: companyId,
+        start_date: dateRange.start,
+        end_date: dateRange.end,
+        room_ids_param: selectedRoom === 'all' ? null : [selectedRoom],
+    }
+    
+    const discountParams = {
+        ...rpcParams,
+        discount_status_param: undefined // discount report doesn't use this
+    }
+
 
     try {
       const [
@@ -98,8 +112,8 @@ export function Reports() {
         supabase.rpc('get_daily_booking_stats', rpcParams),
         supabase.rpc('get_room_stats', rpcParams),
         supabase.rpc('get_financial_summary', rpcParams),
-        supabase.rpc('get_discount_report', rpcParams),
-        supabase.rpc('get_occupancy_report', rpcParams),
+        supabase.rpc('get_discount_report', discountParams),
+        supabase.rpc('get_occupancy_report', occupancyParams),
       ]);
 
       if (dailyStatsResult.error) throw dailyStatsResult.error;
@@ -125,9 +139,9 @@ export function Reports() {
   const calculateSummary = (dailyData: ReportDailyStat[], roomData: ReportRoomStat[]) => {
     const summaryData = dailyData.reduce(
       (acc, day) => {
-        acc.totalRevenue += day.total_revenue;
-        acc.totalBookings += day.total_bookings;
-        acc.newCustomers += day.new_customers;
+        acc.totalRevenue += Number(day.total_revenue);
+        acc.totalBookings += Number(day.total_bookings);
+        acc.newCustomers += Number(day.new_customers);
         return acc;
       },
       { totalRevenue: 0, totalBookings: 0, newCustomers: 0 }
@@ -154,12 +168,11 @@ export function Reports() {
     { title: 'Total Bookings', value: summary.totalBookings.toString(), icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
     { title: 'Total Rooms Booked', value: summary.totalRoomsBooked.toString(), icon: DoorOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
     { title: 'New Customers', value: summary.newCustomers.toString(), icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-    { title: 'Occupancy Rate', value: `${occupancyReport?.occupancy_rate.toFixed(2) ?? 0}%`, icon: TrendingUp, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
+    { title: 'Occupancy Rate', value: `${(occupancyReport?.occupancy_rate || 0).toFixed(1)}%`, icon: TrendingUp, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
   ];
 
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports & Analytics</h1>
@@ -171,7 +184,6 @@ export function Reports() {
         </button>
       </div>
 
-      {/* Filter Bar */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <div className="lg:col-span-2">
@@ -282,14 +294,14 @@ export function Reports() {
                         </div>
                         <div 
                           className="w-full bg-blue-100 hover:bg-blue-200 rounded-t-lg transition-colors" 
-                          style={{ height: `${(stat.total_bookings / (Math.max(...dailyStats.map(s => s.total_bookings)) || 1)) * 100}%` }}>
+                          style={{ height: `${(stat.total_bookings / (Math.max(...dailyStats.map(s => s.total_bookings), 1) || 1)) * 100}%` }}>
                         </div>
                       </div>
                     ))}
                   </div>
                   <div className="flex justify-between pt-2">
-                    <span className="text-xs text-gray-500">{new Date(dateRange.start).toLocaleDateString()}</span>
-                    <span className="text-xs text-gray-500">{new Date(dateRange.end).toLocaleDateString()}</span>
+                    <span className="text-xs text-gray-500">{new Date(dateRange.start + 'T00:00:00').toLocaleDateString()}</span>
+                    <span className="text-xs text-gray-500">{new Date(dateRange.end + 'T00:00:00').toLocaleDateString()}</span>
                   </div>
               </div>
 
@@ -306,7 +318,7 @@ export function Reports() {
                           <p className="font-semibold text-emerald-600">{formatCurrency(room.total_revenue)}</p>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
-                           <div className="bg-indigo-600 h-2.5 rounded-full" style={{width: `${(room.total_bookings / (Math.max(...roomStats.map(r => r.total_bookings)) || 1)) * 100}%`}}></div>
+                           <div className="bg-indigo-600 h-2.5 rounded-full" style={{width: `${(room.total_bookings / (Math.max(...roomStats.map(r => r.total_bookings), 1) || 1)) * 100}%`}}></div>
                         </div>
                       </div>
                     ))}
