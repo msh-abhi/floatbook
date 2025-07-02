@@ -2,16 +2,17 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
-import { 
-  Building2, 
-  Calendar, 
-  Home, 
-  DoorOpen, 
-  CreditCard, 
-  Settings, 
+import {
+  Building2,
+  Calendar,
+  Home,
+  DoorOpen,
+  CreditCard,
+  Settings,
   LogOut,
   Menu,
-  X
+  X,
+  BarChart2
 } from 'lucide-react';
 
 export function Layout() {
@@ -31,6 +32,7 @@ export function Layout() {
     { name: 'Rooms', href: '/rooms', icon: DoorOpen },
     { name: 'Bookings', href: '/bookings', icon: CreditCard },
     { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Reports', href: '/reports', icon: BarChart2 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
