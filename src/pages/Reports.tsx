@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart2, Calendar, DollarSign, Users, TrendingUp, Download } from 'lucide-react';
+import { BarChart2, Calendar, DollarSign, Users, TrendingUp, Download, DoorOpen } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 
@@ -10,15 +10,26 @@ interface DailyStat {
   new_customers: number;
 }
 
+interface RoomStat {
+  room_name: string;
+  total_bookings: number;
+  total_revenue: number;
+}
+
+type DatePreset = '7' | '30' | 'custom';
+
 export function Reports() {
   const { companyId } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [reportData, setReportData] = useState<DailyStat[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
+  const [roomStats, setRoomStats] = useState<RoomStat[]>([]);
   const [summary, setSummary] = useState({
     totalRevenue: 0,
     totalBookings: 0,
     newCustomers: 0,
+    totalRoomsBooked: 0,
   });
+  const [datePreset, setDatePreset] = useState<DatePreset>('30');
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
@@ -29,22 +40,49 @@ export function Reports() {
       fetchReportData();
     }
   }, [companyId, dateRange]);
+  
+  useEffect(() => {
+    const today = new Date();
+    let startDate = new Date();
+    if (datePreset === '7') {
+      startDate.setDate(today.getDate() - 7);
+    } else if (datePreset === '30') {
+      startDate.setDate(today.getDate() - 30);
+    }
+    
+    if (datePreset !== 'custom') {
+      setDateRange({
+        start: startDate.toISOString().split('T')[0],
+        end: today.toISOString().split('T')[0],
+      });
+    }
+  }, [datePreset]);
 
   const fetchReportData = async () => {
     if (!companyId) return;
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.rpc('get_daily_booking_stats', {
+      const dailyStatsPromise = supabase.rpc('get_daily_booking_stats', {
+        company_id_param: companyId,
+        start_date: dateRange.start,
+        end_date: dateRange.end,
+      });
+      
+      const roomStatsPromise = supabase.rpc('get_room_stats', {
         company_id_param: companyId,
         start_date: dateRange.start,
         end_date: dateRange.end,
       });
 
-      if (error) throw error;
+      const [dailyStatsResult, roomStatsResult] = await Promise.all([dailyStatsPromise, roomStatsPromise]);
 
-      setReportData(data || []);
-      calculateSummary(data || []);
+      if (dailyStatsResult.error) throw dailyStatsResult.error;
+      if (roomStatsResult.error) throw roomStatsResult.error;
+
+      setDailyStats(dailyStatsResult.data || []);
+      setRoomStats(roomStatsResult.data || []);
+      calculateSummary(dailyStatsResult.data || [], roomStatsResult.data || []);
     } catch (error) {
       console.error('Error fetching report data:', error);
     } finally {
@@ -52,8 +90,8 @@ export function Reports() {
     }
   };
 
-  const calculateSummary = (data: DailyStat[]) => {
-    const summaryData = data.reduce(
+  const calculateSummary = (dailyData: DailyStat[], roomData: RoomStat[]) => {
+    const summaryData = dailyData.reduce(
       (acc, day) => {
         acc.totalRevenue += day.total_revenue;
         acc.totalBookings += day.total_bookings;
@@ -62,7 +100,10 @@ export function Reports() {
       },
       { totalRevenue: 0, totalBookings: 0, newCustomers: 0 }
     );
-    setSummary(summaryData);
+    setSummary({
+      ...summaryData,
+      totalRoomsBooked: roomData.length
+    });
   };
   
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,6 +133,13 @@ export function Reports() {
       bgColor: 'bg-blue-50',
     },
     {
+        title: 'Total Rooms Booked',
+        value: summary.totalRoomsBooked.toString(),
+        icon: DoorOpen,
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-50',
+    },
+    {
       title: 'New Customers',
       value: summary.newCustomers.toString(),
       icon: Users,
@@ -118,22 +166,31 @@ export function Reports() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-        <div className="flex items-center gap-4">
-          <div>
-            <label htmlFor="start" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-            <input type="date" name="start" id="start" value={dateRange.start} onChange={handleDateChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setDatePreset('7')} className={`px-4 py-2 rounded-lg text-sm font-medium ${datePreset === '7' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Last 7 Days</button>
+            <button onClick={() => setDatePreset('30')} className={`px-4 py-2 rounded-lg text-sm font-medium ${datePreset === '30' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Last 30 Days</button>
+            <button onClick={() => setDatePreset('custom')} className={`px-4 py-2 rounded-lg text-sm font-medium ${datePreset === 'custom' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}>Custom</button>
           </div>
-          <div>
-            <label htmlFor="end" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-            <input type="date" name="end" id="end" value={dateRange.end} onChange={handleDateChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
-          </div>
+          {datePreset === 'custom' && (
+            <>
+              <div>
+                <label htmlFor="start" className="sr-only">Start Date</label>
+                <input type="date" name="start" id="start" value={dateRange.start} onChange={handleDateChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
+              </div>
+              <div>
+                <label htmlFor="end" className="sr-only">End Date</label>
+                <input type="date" name="end" id="end" value={dateRange.end} onChange={handleDateChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
+              </div>
+            </>
+          )}
         </div>
       </div>
       
       {loading ? (
         <div className="animate-pulse space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {Array.from({ length: 3 }).map((_, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="bg-white p-6 rounded-xl shadow-sm border h-32"></div>
                 ))}
             </div>
@@ -142,7 +199,7 @@ export function Reports() {
       ) : (
         <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {summaryCards.map((card) => {
                 const Icon = card.icon;
                 return (
@@ -161,15 +218,41 @@ export function Reports() {
                 })}
             </div>
             
-            {/* Chart */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                <BarChart2 className="h-5 w-5 text-blue-600" />
-                Daily Bookings
-                </h2>
-                <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                <p className="text-gray-400">Chart will be displayed here</p>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Chart */}
+              <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                  <BarChart2 className="h-5 w-5 text-blue-600" />
+                  Daily Bookings
+                  </h2>
+                  <div className="h-80 flex items-end gap-2">
+                    {dailyStats.map(stat => (
+                      <div key={stat.report_date} className="flex-1 flex flex-col items-center gap-2">
+                        <div className="w-full h-full bg-blue-100 rounded-t-lg" style={{ height: `${(stat.total_bookings / Math.max(...dailyStats.map(s => s.total_bookings), 1)) * 100}%` }}></div>
+                        <span className="text-xs text-gray-500">{new Date(stat.report_date).getDate()}</span>
+                      </div>
+                    ))}
+                  </div>
+              </div>
+
+              {/* Room Stats */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                  <DoorOpen className="h-5 w-5 text-indigo-600" />
+                  Room Performance
+                  </h2>
+                  <div className="space-y-4">
+                    {roomStats.map(room => (
+                      <div key={room.room_name} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-gray-800">{room.room_name}</p>
+                          <p className="text-sm text-gray-500">{room.total_bookings} bookings</p>
+                        </div>
+                        <p className="font-semibold text-emerald-600">{formatCurrency(room.total_revenue)}</p>
+                      </div>
+                    ))}
+                  </div>
+              </div>
             </div>
         </>
       )}
