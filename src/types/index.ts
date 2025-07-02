@@ -49,6 +49,7 @@ export interface Booking {
   booking_type: string; // Add this
   created_at: string;
   room?: Room;
+  notes?: string; 
 }
 
 // New Report Types
@@ -97,4 +98,10 @@ export interface Company {
   address?: string;
   currency?: string; // Add this line
   created_at: string;
+}
+
+
+  export interface BookingFilters {
+  query: string;
+  paymentStatus: 'all' | 'paid' | 'unpaid';
 }
