@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart2, Calendar, DollarSign, Users, TrendingUp, Download, DoorOpen, Percent, RefreshCw } from 'lucide-react';
+import { BarChart2, Calendar, Users, TrendingUp, Download, DoorOpen, Percent, RefreshCw, CircleDollarSign } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { supabase } from '../lib/supabase';
@@ -149,7 +149,7 @@ export function Reports() {
   };
   
   const summaryCards = [
-    { title: 'Total Revenue', value: formatCurrency(summary.totalRevenue, company?.currency), icon: DollarSign, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+    { title: 'Total Revenue', value: formatCurrency(summary.totalRevenue, company?.currency), icon: CircleDollarSign, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
     { title: 'Total Bookings', value: summary.totalBookings.toString(), icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
     { title: 'Rooms with Bookings', value: summary.totalRoomsBooked.toString(), icon: DoorOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
     { title: 'New Customers', value: summary.newCustomers.toString(), icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' },
@@ -242,7 +242,10 @@ export function Reports() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Financial Summary</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <CircleDollarSign className="h-5 w-5 text-emerald-600" />
+                    Financial Summary
+                  </h2>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center"> <p className="text-gray-600">Paid Revenue</p> <p className="font-semibold text-emerald-600">{formatCurrency(financialSummary?.paid_revenue || 0, company?.currency)}</p> </div>
                     <div className="flex justify-between items-center"> <p className="text-gray-600">Unpaid Revenue</p> <p className="font-semibold text-red-500">{formatCurrency(financialSummary?.unpaid_revenue || 0, company?.currency)}</p> </div>
@@ -252,7 +255,10 @@ export function Reports() {
                   </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Discount Report</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Percent className="h-5 w-5 text-cyan-600" />
+                    Discount Report
+                  </h2>
                   <div className="space-y-4">
                     {discountReport.map(item => (
                       <div key={item.discount_type} className="flex justify-between items-center">
@@ -316,3 +322,5 @@ export function Reports() {
     </div>
   );
 }
+
+export default Reports;
