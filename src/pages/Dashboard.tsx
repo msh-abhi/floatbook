@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, TrendingUp, Clock, Plus, CheckCircle, CircleDollarSign } from 'lucide-react'; // Changed here
+import { Calendar, Users, TrendingUp, Clock, Plus, CheckCircle, CircleDollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -134,7 +134,7 @@ export function Dashboard() {
     {
       title: 'Total Revenue',
       value: formatCurrency(stats.totalRevenue, company?.currency),
-      icon: CircleDollarSign, // Changed here
+      icon: CircleDollarSign,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
     },
