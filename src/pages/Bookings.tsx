@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Edit, Trash2, Calendar, Mail, Phone, CheckCircle, Clock, Percent, UserCheck, CircleDollarSign } from 'lucide-react';
+import { CreditCard, Plus, Edit, Trash2, Calendar, Mail, Phone, CheckCircle, Clock, Percent, UserCheck, CircleDollarSign, Users, Ship } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
@@ -14,7 +14,8 @@ export function Bookings() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-  const [formData, setFormData] = useState({
+
+  const initialFormData = {
     room_id: '',
     check_in_date: '',
     check_out_date: '',
@@ -27,7 +28,11 @@ export function Bookings() {
     advance_paid: '0',
     referred_by: '',
     notes: '',
-  });
+    guest_count: '1',
+    booking_type: 'individual',
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     if (companyId) {
@@ -35,7 +40,7 @@ export function Bookings() {
     }
   }, [companyId]);
 
-  // Auto-calculate check_out_date when check_in_date changes
+  // Auto-calculate check_out_date and auto-fill price
   useEffect(() => {
     if (formData.check_in_date && !editingBooking) {
       const checkInDate = new Date(formData.check_in_date);
@@ -43,25 +48,28 @@ export function Bookings() {
       const checkOutDate = checkInDate.toISOString().split('T')[0];
       setFormData(prev => ({ ...prev, check_out_date: checkOutDate }));
     }
-  }, [formData.check_in_date, editingBooking]);
+    
+    if (formData.room_id) {
+      const selectedRoom = rooms.find(room => room.id === formData.room_id);
+      if (selectedRoom) {
+        setFormData(prev => ({ ...prev, total_amount: selectedRoom.price.toString() }));
+      }
+    }
+  }, [formData.check_in_date, formData.room_id, rooms, editingBooking]);
 
   const fetchData = async () => {
     if (!companyId) return;
 
     try {
-      // Fetch bookings with room data
+      setLoading(true);
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          room:rooms(*)
-        `)
+        .select(`*, room:rooms(*)`)
         .eq('company_id', companyId)
         .order('check_in_date', { ascending: false });
 
       if (bookingsError) throw bookingsError;
 
-      // Fetch rooms for the form
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
         .select('*')
@@ -113,26 +121,18 @@ export function Bookings() {
         advance_paid: parseFloat(formData.advance_paid),
         referred_by: formData.referred_by || null,
         notes: formData.notes || null,
-        is_paid: false,
+        guest_count: parseInt(formData.guest_count),
+        booking_type: formData.booking_type,
+        is_paid: calculateDueAmount() <= 0,
       };
 
       if (editingBooking) {
-        const { error } = await supabase
-          .from('bookings')
-          .update(bookingData)
-          .eq('id', (editingBooking as any).id);
-
-        if (error) throw error;
+        await supabase.from('bookings').update(bookingData).eq('id', (editingBooking as any).id);
       } else {
-        const { error } = await supabase
-          .from('bookings')
-          .insert([bookingData]);
-
-        if (error) throw error;
+        await supabase.from('bookings').insert([bookingData]);
       }
 
       setShowModal(false);
-      setEditingBooking(null);
       resetForm();
       fetchData();
     } catch (error) {
@@ -156,6 +156,8 @@ export function Bookings() {
       advance_paid: booking.advance_paid?.toString() || '0',
       referred_by: booking.referred_by || '',
       notes: booking.notes || '',
+      guest_count: (booking.guest_count || 1).toString(),
+      booking_type: booking.booking_type || 'individual',
     });
     setShowModal(true);
   };
@@ -166,12 +168,7 @@ export function Bookings() {
     }
 
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .delete()
-        .eq('id', bookingId);
-
-      if (error) throw error;
+      await supabase.from('bookings').delete().eq('id', bookingId);
       fetchData();
     } catch (error) {
       console.error('Error deleting booking:', error);
@@ -180,34 +177,14 @@ export function Bookings() {
 
   const togglePaymentStatus = async (booking: Booking) => {
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ is_paid: !booking.is_paid })
-        .eq('id', booking.id);
-
-      if (error) throw error;
+      await supabase.from('bookings').update({ is_paid: !booking.is_paid }).eq('id', booking.id);
       fetchData();
     } catch (error) {
       console.error('Error updating payment status:', error);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      room_id: '',
-      check_in_date: '',
-      check_out_date: '',
-      customer_name: '',
-      customer_email: '',
-      customer_phone: '',
-      total_amount: '',
-      discount_type: 'fixed',
-      discount_value: '0',
-      advance_paid: '0',
-      referred_by: '',
-      notes: '',
-    });
-  };
+  const resetForm = () => setFormData(initialFormData);
 
   const openModal = () => {
     setEditingBooking(null);
@@ -394,210 +371,93 @@ export function Bookings() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
                 {/* Left Column */}
                 <div className="space-y-4">
-                  <div>
-                    <label htmlFor="room_id" className="block text-sm font-medium text-gray-700 mb-1">
-                      Room *
-                    </label>
-                    <select
-                      id="room_id"
-                      value={formData.room_id}
-                      onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">Select a room</option>
-                      {rooms.map((room) => (
-                        <option key={room.id} value={room.id}>
-                          {room.name} - {formatCurrency(room.price, company?.currency)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="check_in_date" className="block text-sm font-medium text-gray-700 mb-1">
-                        Check-in Date *
-                      </label>
-                      <input
-                        id="check_in_date"
-                        type="date"
-                        value={formData.check_in_date}
-                        onChange={(e) => setFormData({ ...formData, check_in_date: e.target.value })}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
+                      <label htmlFor="check_in_date" className="block text-sm font-medium text-gray-700 mb-1">Check-in Date *</label>
+                      <input id="check_in_date" type="date" value={formData.check_in_date} onChange={(e) => setFormData({ ...formData, check_in_date: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg"/>
                     </div>
                     <div>
-                      <label htmlFor="check_out_date" className="block text-sm font-medium text-gray-700 mb-1">
-                        Check-out Date *
-                      </label>
-                      <input
-                        id="check_out_date"
-                        type="date"
-                        value={formData.check_out_date}
-                        onChange={(e) => setFormData({ ...formData, check_out_date: e.target.value })}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
+                      <label htmlFor="check_out_date" className="block text-sm font-medium text-gray-700 mb-1">Check-out Date *</label>
+                      <input id="check_out_date" type="date" value={formData.check_out_date} onChange={(e) => setFormData({ ...formData, check_out_date: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg"/>
                     </div>
                   </div>
-
                   <div>
-                    <label htmlFor="customer_name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Name *
-                    </label>
-                    <input
-                      id="customer_name"
-                      type="text"
-                      value={formData.customer_name}
-                      onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Enter customer name"
-                    />
+                    <label htmlFor="customer_name" className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+                    <input id="customer_name" type="text" value={formData.customer_name} onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="Enter customer name"/>
                   </div>
-
-                  <div>
-                    <label htmlFor="customer_email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Email
-                    </label>
-                    <input
-                      id="customer_email"
-                      type="email"
-                      value={formData.customer_email}
-                      onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="customer@email.com"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="customer_email" className="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
+                      <input id="customer_email" type="email" value={formData.customer_email} onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="customer@email.com"/>
+                    </div>
+                    <div>
+                      <label htmlFor="customer_phone" className="block text-sm font-medium text-gray-700 mb-1">Customer Phone</label>
+                      <input id="customer_phone" type="tel" value={formData.customer_phone} onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="+1 (555) 000-0000"/>
+                    </div>
                   </div>
-
                   <div>
-                    <label htmlFor="customer_phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Phone
-                    </label>
-                    <input
-                      id="customer_phone"
-                      type="tel"
-                      value={formData.customer_phone}
-                      onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="+1 (555) 000-0000"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="referred_by" className="block text-sm font-medium text-gray-700 mb-1">
-                      Referred By
-                    </label>
-                    <input
-                      id="referred_by"
-                      type="text"
-                      value={formData.referred_by}
-                      onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Who referred this customer?"
-                    />
+                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={5} className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="Any additional notes about the booking..."/>
                   </div>
                 </div>
 
                 {/* Right Column */}
                 <div className="space-y-4">
-                  <div>
-                    <label htmlFor="total_amount" className="block text-sm font-medium text-gray-700 mb-1">
-                      Total Price ({company?.currency}) *
-                    </label>
-                    <input
-                      id="total_amount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.total_amount}
-                      onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="0.00"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Discount
-                    </label>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.discount_value}
-                          onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="0"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ 
-                          ...formData, 
-                          discount_type: formData.discount_type === 'fixed' ? 'percentage' : 'fixed' 
-                        })}
-                        className={`px-4 py-3 border rounded-lg transition-all flex items-center gap-2 ${
-                          formData.discount_type === 'percentage'
-                            ? 'bg-blue-50 border-blue-300 text-blue-700'
-                            : 'bg-gray-50 border-gray-300 text-gray-700'
-                        }`}
-                      >
-                        {formData.discount_type === 'percentage' ? (
-                          <Percent className="h-4 w-4" />
-                        ) : (
-                          <CircleDollarSign className="h-4 w-4" />
-                        )}
-                      </button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="room_id" className="block text-sm font-medium text-gray-700 mb-1">Room *</label>
+                      <select id="room_id" value={formData.room_id} onChange={(e) => setFormData({ ...formData, room_id: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <option value="">Select a room</option>
+                        {rooms.map((room) => ( <option key={room.id} value={room.id}> {room.name} </option> ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="guest_count" className="block text-sm font-medium text-gray-700 mb-1">Guests</label>
+                      <input id="guest_count" type="number" min="1" value={formData.guest_count} onChange={(e) => setFormData({ ...formData, guest_count: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
                     </div>
                   </div>
-
                   <div>
-                    <label htmlFor="advance_paid" className="block text-sm font-medium text-gray-700 mb-1">
-                      Advance Paid
-                    </label>
-                    <input
-                      id="advance_paid"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.advance_paid}
-                      onChange={(e) => setFormData({ ...formData, advance_paid: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="0.00"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Booking Type</label>
+                    <div className="flex rounded-lg bg-gray-100 p-1">
+                      <button type="button" onClick={() => setFormData({...formData, booking_type: 'individual'})} className={`flex-1 py-2 px-4 text-sm rounded-md flex items-center justify-center gap-2 ${formData.booking_type === 'individual' ? 'bg-white shadow' : ''}`}><Users className="h-4 w-4"/> Individual</button>
+                      <button type="button" onClick={() => setFormData({...formData, booking_type: 'full_boat'})} className={`flex-1 py-2 px-4 text-sm rounded-md flex items-center justify-center gap-2 ${formData.booking_type === 'full_boat' ? 'bg-white shadow' : ''}`}><Ship className="h-4 w-4"/> Full Boat</button>
+                    </div>
                   </div>
-
-                  {/* Due Amount Display */}
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Due Amount:</span>
-                      <span className="text-lg font-semibold text-gray-900">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="total_amount" className="block text-sm font-medium text-gray-700 mb-1">Total Price</label>
+                      <input id="total_amount" type="number" step="0.01" min="0" value={formData.total_amount} onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"/>
+                    </div>
+                    <div>
+                      <label htmlFor="advance_paid" className="block text-sm font-medium text-gray-700 mb-1">Advance Paid</label>
+                      <input id="advance_paid" type="number" step="0.01" min="0" value={formData.advance_paid} onChange={(e) => setFormData({ ...formData, advance_paid: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg"/>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Discount</label>
+                        <div className="flex">
+                          <input type="number" step="0.01" min="0" value={formData.discount_value} onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-l-lg"/>
+                          <button type="button" onClick={() => setFormData({ ...formData, discount_type: formData.discount_type === 'fixed' ? 'percentage' : 'fixed' })} className={`px-4 py-3 border-t border-b border-r rounded-r-lg flex items-center gap-2 ${formData.discount_type === 'percentage' ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                            {formData.discount_type === 'percentage' ? <Percent className="h-4 w-4"/> : <CircleDollarSign className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="referred_by" className="block text-sm font-medium text-gray-700 mb-1">Referred By</label>
+                        <input id="referred_by" type="text" value={formData.referred_by} onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="e.g. John Doe"/>
+                      </div>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 font-medium">TOTAL DUE:</span>
+                      <span className="text-2xl font-bold text-blue-700">
                         {formatCurrency(calculateDueAmount(), company?.currency)}
                       </span>
                     </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                      Notes
-                    </label>
-                    <textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={2}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Any additional notes about the booking..."
-                    />
                   </div>
                 </div>
               </div>
