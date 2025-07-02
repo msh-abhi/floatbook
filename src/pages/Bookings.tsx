@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Edit, Trash2, Calendar, User, Mail, Phone, CheckCircle, Clock, DollarSign, Percent, UserCheck } from 'lucide-react';
+import { CreditCard, Plus, Edit, Trash2, Calendar, Mail, Phone, CheckCircle, Clock, Percent, UserCheck, CircleDollarSign } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
@@ -52,7 +52,10 @@ export function Bookings() {
       // Fetch bookings with room data
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`*, room:rooms(*)`)
+        .select(`
+          *,
+          room:rooms(*)
+        `)
         .eq('company_id', companyId)
         .order('check_in_date', { ascending: false });
 
@@ -110,14 +113,14 @@ export function Bookings() {
         advance_paid: parseFloat(formData.advance_paid),
         referred_by: formData.referred_by || null,
         notes: formData.notes || null,
-        is_paid: false, // Default to unpaid
+        is_paid: false,
       };
 
       if (editingBooking) {
         const { error } = await supabase
           .from('bookings')
           .update(bookingData)
-          .eq('id', editingBooking.id);
+          .eq('id', (editingBooking as any).id);
 
         if (error) throw error;
       } else {
@@ -347,7 +350,7 @@ export function Bookings() {
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-gray-600">
-                    <DollarSign className="h-4 w-4" />
+                    <CircleDollarSign className="h-4 w-4" />
                     <span className="font-semibold text-gray-900">
                       {formatCurrency(Number(booking.total_amount), company?.currency)}
                     </span>
@@ -551,7 +554,7 @@ export function Bookings() {
                         {formData.discount_type === 'percentage' ? (
                           <Percent className="h-4 w-4" />
                         ) : (
-                          <DollarSign className="h-4 w-4" />
+                          <CircleDollarSign className="h-4 w-4" />
                         )}
                       </button>
                     </div>
