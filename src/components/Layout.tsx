@@ -2,13 +2,13 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
-import {
-  Building2,
-  Calendar,
-  Home,
-  DoorOpen,
-  CreditCard,
-  Settings,
+import { 
+  Building2, 
+  Calendar, 
+  Home, 
+  DoorOpen, 
+  CreditCard, 
+  Settings, 
   LogOut,
   Menu,
   X,
@@ -38,13 +38,27 @@ export function Layout() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const CompanyLogo = () => {
+    if (company?.logo_url) {
+      return (
+        <img 
+          src={company.logo_url} 
+          alt={`${company.name} logo`} 
+          className="h-8 w-8 rounded-lg object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+      );
+    }
+    return <Building2 className="h-8 w-8 text-blue-600" />;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile menu button */}
       <div className="lg:hidden bg-white shadow-sm border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Building2 className="h-8 w-8 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-900">FloatBook</h1>
+          <CompanyLogo />
+          <h1 className="text-xl font-bold text-gray-900">{company?.name || 'FloatBook'}</h1>
         </div>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -93,12 +107,10 @@ export function Layout() {
           <div className="flex flex-col h-full">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-6 border-b">
-              <Building2 className="h-8 w-8 text-blue-600" />
+              <CompanyLogo />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">FloatBook</h1>
-                {company && (
-                  <p className="text-sm text-gray-500 truncate">{company.name}</p>
-                )}
+                <h1 className="text-xl font-bold text-gray-900 truncate">{company?.name}</h1>
+                <p className="text-sm text-gray-400">by FloatBook</p>
               </div>
             </div>
 
