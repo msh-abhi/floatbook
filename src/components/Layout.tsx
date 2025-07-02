@@ -12,7 +12,8 @@ import {
   LogOut,
   Menu,
   X,
-  BarChart2
+  BarChart2,
+  Zap
 } from 'lucide-react';
 
 export function Layout() {
@@ -36,7 +37,7 @@ export function Layout() {
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   const CompanyLogo = () => {
     if (company?.logo_url) {
@@ -117,25 +118,40 @@ export function Layout() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-4 py-6 space-y-2">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
+            <div className="flex-1 flex flex-col justify-between">
+              <nav className="px-4 py-6 space-y-2">
+                {navigation.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActive(item.href)
+                          ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              {/* Upgrade Button */}
+              <div className="px-6 mb-6">
+                <Link
+                  to="/settings"
+                  state={{ tab: 'plans' }}
+                  className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                >
+                  <Zap className="h-5 w-5" />
+                  UPGRADE
+                </Link>
+              </div>
+            </div>
+
 
             {/* User section */}
             <div className="border-t px-4 py-4">
