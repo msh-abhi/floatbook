@@ -33,9 +33,9 @@ export function Settings() {
   useEffect(() => {
     if (company) {
       setCompanyForm({
-        name: company.name,
+        name: company.name || '',
         logo_url: company.logo_url || '',
-        address: '',
+        address: company.address || '', // Correctly populate address
       });
     }
   }, [company]);
@@ -68,14 +68,18 @@ export function Settings() {
     setSaving(true);
 
     try {
+      // Correctly include all fields in the update
       const { error } = await updateCompany({
         name: companyForm.name,
         logo_url: companyForm.logo_url || null,
+        address: companyForm.address || null,
       });
 
       if (error) {
-        console.error('Error updating company:', error);
         alert('Error updating company. Please try again.');
+      } else {
+        alert('Company information updated successfully!');
+        window.location.reload(); // Force a full refresh to reflect changes everywhere
       }
     } catch (error) {
       console.error('Error updating company:', error);
@@ -115,30 +119,9 @@ export function Settings() {
   ];
 
   const plans = [
-    {
-      name: 'Free Plan',
-      price: '$0',
-      period: '/month',
-      features: ['2 rooms', '10 bookings/month', 'Basic support'],
-      current: true,
-      color: 'gray',
-    },
-    {
-      name: 'Basic Plan',
-      price: '$29',
-      period: '/month',
-      features: ['10 rooms', '50 bookings/month', 'Email support', 'Analytics'],
-      current: false,
-      color: 'blue',
-    },
-    {
-      name: 'Pro Plan',
-      price: '$99',
-      period: '/month',
-      features: ['Unlimited rooms', 'Unlimited bookings', 'Priority support', 'Advanced analytics', 'API access'],
-      current: false,
-      color: 'purple',
-    },
+    { name: 'Free Plan', price: '$0', period: '/month', features: ['2 rooms', '10 bookings/month', 'Basic support'], current: true, color: 'gray' },
+    { name: 'Basic Plan', price: '$29', period: '/month', features: ['10 rooms', '50 bookings/month', 'Email support', 'Analytics'], current: false, color: 'blue' },
+    { name: 'Pro Plan', price: '$99', period: '/month', features: ['Unlimited rooms', 'Unlimited bookings', 'Priority support', 'Advanced analytics', 'API access'], current: false, color: 'purple' },
   ];
 
   if (loading) {
@@ -333,7 +316,7 @@ export function Settings() {
           )}
 
           {activeTab === 'email' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Mail className="h-5 w-5 text-emerald-600" />
@@ -371,69 +354,7 @@ export function Settings() {
               </div>
             </div>
           )}
-
-          {activeTab === 'payment' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="p-6 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-indigo-600" />
-                  Payment Method Settings
-                </h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <label htmlFor="stripe_secret_key" className="block text-sm font-medium text-gray-700 mb-2">
-                      Stripe Secret Key
-                    </label>
-                    <input
-                      id="stripe_secret_key"
-                      type="password"
-                      value={paymentSettings.stripe_secret_key}
-                      onChange={(e) => setPaymentSettings({ ...paymentSettings, stripe_secret_key: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                      placeholder="sk_test_..."
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="paypal_client_id" className="block text-sm font-medium text-gray-700 mb-2">
-                      PayPal Client ID
-                    </label>
-                    <input
-                      id="paypal_client_id"
-                      type="text"
-                      value={paymentSettings.paypal_client_id}
-                      onChange={(e) => setPaymentSettings({ ...paymentSettings, paypal_client_id: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                      placeholder="Enter PayPal Client ID"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="bkash_merchant_id" className="block text-sm font-medium text-gray-700 mb-2">
-                      bKash Merchant ID
-                    </label>
-                    <input
-                      id="bkash_merchant_id"
-                      type="text"
-                      value={paymentSettings.bkash_merchant_id}
-                      onChange={(e) => setPaymentSettings({ ...paymentSettings, bkash_merchant_id: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                      placeholder="Enter bKash Merchant ID"
-                    />
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-sm text-yellow-700">
-                      <strong>Security:</strong> Payment credentials are encrypted and stored securely.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
+          
           {activeTab === 'plans' && (
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -524,7 +445,6 @@ export function Settings() {
         </div>
       </div>
 
-      {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
