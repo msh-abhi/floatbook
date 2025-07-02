@@ -87,4 +87,13 @@ export interface Company {
   address?: string;
   created_at: string;
 }
+
+export interface Company {
+  id: string;
+  name: string;
+  logo_url?: string;
+  address?: string;
+  currency?: string; // Add this line
+  created_at: string;
+}
 // ... rest of the file
