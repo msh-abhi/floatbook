@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart2, Calendar, DollarSign, Users, TrendingUp, Download, DoorOpen, Percent, RefreshCw } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useCompany } from '../hooks/useCompany';
 import { supabase } from '../lib/supabase';
 import { Room, ReportDailyStat, ReportRoomStat, ReportFinancialSummary, ReportDiscount, ReportOccupancy } from '../types';
+import { formatCurrency } from '../utils/currency';
 
 type DatePreset = 'today' | 'week' | 'month' | 'custom';
 type PaymentStatus = 'all' | 'paid' | 'unpaid';
@@ -10,6 +12,7 @@ type DiscountStatus = 'all' | 'discounted' | 'not_discounted';
 
 export function Reports() {
   const { companyId } = useAuth();
+  const { company } = useCompany(companyId);
   const [loading, setLoading] = useState(true);
   const [rooms, setRooms] = useState<Room[]>([]);
 
@@ -145,12 +148,8 @@ export function Reports() {
     setDiscountStatus('all');
   };
   
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  };
-  
   const summaryCards = [
-    { title: 'Total Revenue', value: formatCurrency(summary.totalRevenue), icon: DollarSign, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+    { title: 'Total Revenue', value: formatCurrency(summary.totalRevenue, company?.currency), icon: DollarSign, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
     { title: 'Total Bookings', value: summary.totalBookings.toString(), icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
     { title: 'Rooms with Bookings', value: summary.totalRoomsBooked.toString(), icon: DoorOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
     { title: 'New Customers', value: summary.newCustomers.toString(), icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' },
@@ -245,11 +244,11 @@ export function Reports() {
               <div className="bg-white rounded-xl shadow-sm border p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Financial Summary</h2>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center"> <p className="text-gray-600">Paid Revenue</p> <p className="font-semibold text-emerald-600">{formatCurrency(financialSummary?.paid_revenue || 0)}</p> </div>
-                    <div className="flex justify-between items-center"> <p className="text-gray-600">Unpaid Revenue</p> <p className="font-semibold text-red-500">{formatCurrency(financialSummary?.unpaid_revenue || 0)}</p> </div>
+                    <div className="flex justify-between items-center"> <p className="text-gray-600">Paid Revenue</p> <p className="font-semibold text-emerald-600">{formatCurrency(financialSummary?.paid_revenue || 0, company?.currency)}</p> </div>
+                    <div className="flex justify-between items-center"> <p className="text-gray-600">Unpaid Revenue</p> <p className="font-semibold text-red-500">{formatCurrency(financialSummary?.unpaid_revenue || 0, company?.currency)}</p> </div>
                     <hr/>
-                    <div className="flex justify-between items-center"> <p className="text-gray-600">Advance Paid</p> <p className="font-semibold text-blue-600">{formatCurrency(financialSummary?.total_advance || 0)}</p> </div>
-                    <div className="flex justify-between items-center"> <p className="text-gray-600">Due Amount</p> <p className="font-semibold text-orange-500">{formatCurrency(financialSummary?.total_due || 0)}</p> </div>
+                    <div className="flex justify-between items-center"> <p className="text-gray-600">Advance Paid</p> <p className="font-semibold text-blue-600">{formatCurrency(financialSummary?.total_advance || 0, company?.currency)}</p> </div>
+                    <div className="flex justify-between items-center"> <p className="text-gray-600">Due Amount</p> <p className="font-semibold text-orange-500">{formatCurrency(financialSummary?.total_due || 0, company?.currency)}</p> </div>
                   </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border p-6">
@@ -261,7 +260,7 @@ export function Reports() {
                           <p className="font-medium text-gray-800 capitalize">{item.discount_type}</p>
                           <p className="text-sm text-gray-500">{item.booking_count} discounted bookings</p>
                         </div>
-                        <p className="font-semibold text-cyan-600">{formatCurrency(item.total_discounted)}</p>
+                        <p className="font-semibold text-cyan-600">{formatCurrency(item.total_discounted, company?.currency)}</p>
                       </div>
                     ))}
                     {discountReport.length === 0 && <p className="text-gray-500 text-center py-4">No discounts applied in this period.</p>}
@@ -301,7 +300,7 @@ export function Reports() {
                             <p className="font-medium text-gray-800">{room.room_name}</p>
                             <p className="text-sm text-gray-500">{room.total_bookings} bookings</p>
                           </div>
-                          <p className="font-semibold text-emerald-600">{formatCurrency(room.total_revenue)}</p>
+                          <p className="font-semibold text-emerald-600">{formatCurrency(room.total_revenue, company?.currency)}</p>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
                            <div className="bg-indigo-600 h-2.5 rounded-full" style={{width: `${(room.total_bookings / (Math.max(...roomStats.map(r => r.total_bookings), 1) || 1)) * 100}%`}}></div>
@@ -317,5 +316,3 @@ export function Reports() {
     </div>
   );
 }
-
-export default Reports;
