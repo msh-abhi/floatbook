@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Edit, Trash2, Calendar, Mail, Phone, CheckCircle, Clock, Percent, UserCheck, CircleDollarSign, Users, Ship } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CreditCard, Plus, Edit, Trash2, Calendar, Mail, Phone, CheckCircle, Clock, Percent, UserCheck, CircleDollarSign, Users, Ship, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
-import { Booking, Room } from '../types';
+import { Booking, Room, BookingFilters } from '../types';
 import { formatCurrency } from '../utils/currency';
 
 export function Bookings() {
@@ -16,23 +16,14 @@ export function Bookings() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   const initialFormData = {
-    room_id: '',
-    check_in_date: '',
-    check_out_date: '',
-    customer_name: '',
-    customer_email: '',
-    customer_phone: '',
-    total_amount: '',
-    discount_type: 'fixed' as 'fixed' | 'percentage',
-    discount_value: '0',
-    advance_paid: '0',
-    referred_by: '',
-    notes: '',
-    guest_count: '1',
-    booking_type: 'individual',
+    room_id: '', check_in_date: '', check_out_date: '', customer_name: '',
+    customer_email: '', customer_phone: '', total_amount: '',
+    discount_type: 'fixed' as 'fixed' | 'percentage', discount_value: '0',
+    advance_paid: '0', referred_by: '', notes: '', guest_count: '1', booking_type: 'individual',
   };
-
   const [formData, setFormData] = useState(initialFormData);
+  
+  const [filters, setFilters] = useState<BookingFilters>({ query: '', paymentStatus: 'all' });
 
   useEffect(() => {
     if (companyId) {
@@ -40,22 +31,14 @@ export function Bookings() {
     }
   }, [companyId]);
 
-  // Auto-calculate check_out_date and auto-fill price
   useEffect(() => {
-    if (formData.check_in_date && !editingBooking) {
-      const checkInDate = new Date(formData.check_in_date);
-      checkInDate.setDate(checkInDate.getDate() + 1);
-      const checkOutDate = checkInDate.toISOString().split('T')[0];
-      setFormData(prev => ({ ...prev, check_out_date: checkOutDate }));
-    }
-    
     if (formData.room_id && !editingBooking) {
       const selectedRoom = rooms.find(room => room.id === formData.room_id);
       if (selectedRoom) {
         setFormData(prev => ({ ...prev, total_amount: selectedRoom.price.toString() }));
       }
     }
-  }, [formData.check_in_date, formData.room_id, rooms, editingBooking]);
+  }, [formData.room_id, rooms, editingBooking]);
 
   const fetchData = async () => {
     if (!companyId) return;
@@ -87,21 +70,13 @@ export function Bookings() {
     if (!companyId) return;
     try {
       const bookingData = {
-        company_id: companyId,
-        room_id: formData.room_id,
-        check_in_date: formData.check_in_date,
-        check_out_date: formData.check_out_date,
-        customer_name: formData.customer_name,
-        customer_email: formData.customer_email || null,
-        customer_phone: formData.customer_phone || null,
-        total_amount: parseFloat(formData.total_amount),
-        discount_type: formData.discount_type,
-        discount_value: parseFloat(formData.discount_value),
-        advance_paid: parseFloat(formData.advance_paid),
-        referred_by: formData.referred_by || null,
-        notes: formData.notes || null,
-        guest_count: parseInt(formData.guest_count),
-        booking_type: formData.booking_type,
+        company_id: companyId, room_id: formData.room_id, check_in_date: formData.check_in_date,
+        check_out_date: formData.check_out_date, customer_name: formData.customer_name,
+        customer_email: formData.customer_email || null, customer_phone: formData.customer_phone || null,
+        total_amount: parseFloat(formData.total_amount), discount_type: formData.discount_type,
+        discount_value: parseFloat(formData.discount_value), advance_paid: parseFloat(formData.advance_paid),
+        referred_by: formData.referred_by || null, notes: formData.notes || null,
+        guest_count: parseInt(formData.guest_count), booking_type: formData.booking_type,
         is_paid: calculateDueAmount() <= 0,
       };
 
@@ -133,7 +108,7 @@ export function Bookings() {
       discount_value: booking.discount_value?.toString() || '0',
       advance_paid: booking.advance_paid?.toString() || '0',
       referred_by: booking.referred_by || '',
-      notes: (booking as any).notes || '',
+      notes: booking.notes || '',
       guest_count: (booking.guest_count || 1).toString(),
       booking_type: booking.booking_type || 'individual',
     });
@@ -151,6 +126,25 @@ export function Bookings() {
     await supabase.from('bookings').update({ is_paid: !booking.is_paid }).eq('id', booking.id);
     fetchData();
   };
+  
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(booking => {
+      const query = filters.query.toLowerCase();
+      const matchesQuery = (
+        booking.customer_name.toLowerCase().includes(query) ||
+        booking.room?.name.toLowerCase().includes(query) ||
+        (booking.referred_by && booking.referred_by.toLowerCase().includes(query))
+      );
+      
+      const matchesPayment = (
+        filters.paymentStatus === 'all' ||
+        (filters.paymentStatus === 'paid' && booking.is_paid) ||
+        (filters.paymentStatus === 'unpaid' && !booking.is_paid)
+      );
+
+      return matchesQuery && matchesPayment;
+    });
+  }, [bookings, filters]);
 
   const resetForm = () => setFormData(initialFormData);
   const openModal = () => { setEditingBooking(null); resetForm(); setShowModal(true); };
@@ -170,15 +164,41 @@ export function Bookings() {
         </button>
       </div>
 
-      {bookings.length === 0 ? (
+      <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by customer, room, or referral..."
+              value={filters.query}
+              onChange={(e) => setFilters({ ...filters, query: e.target.value })}
+              className="w-full pl-10 p-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white"
+            />
+          </div>
+          <div>
+            <select
+              value={filters.paymentStatus}
+              onChange={(e) => setFilters({ ...filters, paymentStatus: e.target.value as any })}
+              className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white"
+            >
+              <option value="all">All Payment Statuses</option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {filteredBookings.length === 0 ? (
         <div className="text-center py-12">
           <CreditCard className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings yet</h3>
-          <p className="text-gray-600 mb-6">Get started by creating your first booking.</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+          <p className="text-gray-600">Try adjusting your filters or create a new booking.</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {bookings.map((booking) => (
+          {filteredBookings.map((booking) => (
             <div key={booking.id} className="bg-white rounded-xl shadow-sm border p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
@@ -197,17 +217,13 @@ export function Bookings() {
                   <button onClick={() => handleDelete(booking.id)} className="p-2 text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-gray-400"/><span>{booking.customer_email}</span></div>
-                <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-gray-400"/><span>{booking.customer_phone}</span></div>
-                <div className="flex items-center gap-2"><CircleDollarSign className="h-4 w-4 text-gray-400"/><span className="font-semibold">{formatCurrency(Number(booking.total_amount), company?.currency)}</span></div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+                {booking.customer_email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-gray-400"/><span>{booking.customer_email}</span></div>}
+                {booking.customer_phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-gray-400"/><span>{booking.customer_phone}</span></div>}
+                <div className="flex items-center gap-2"><CircleDollarSign className="h-4 w-4 text-gray-400"/><span className="font-semibold text-gray-800">{formatCurrency(Number(booking.total_amount), company?.currency)}</span></div>
                 {booking.advance_paid > 0 && <div className="flex items-center gap-2"><span className="text-xs">Advance:</span><span className="font-medium text-emerald-600">{formatCurrency(Number(booking.advance_paid), company?.currency)}</span></div>}
+                {booking.referred_by && <div className="flex items-center gap-2"><UserCheck className="h-4 w-4 text-gray-400"/><span>Referred by: {booking.referred_by}</span></div>}
               </div>
-              {(booking as any).notes && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
-                  <strong>Notes:</strong> {(booking as any).notes}
-                </div>
-              )}
             </div>
           ))}
         </div>
