@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Users, LogOut, Mail, Trash2, UserPlus, Settings as SettingsIcon, CreditCard, Crown, Key, Zap } from 'lucide-react';
+import { Building2, Users, LogOut, Mail, Trash2, UserPlus, Settings as SettingsIcon, CreditCard, Crown, MapPin, Key, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
@@ -253,8 +253,7 @@ export function Settings() {
                             alt="Logo preview"
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
+                              (e.target as HTMLImageElement).style.display = 'none';
                             }}
                           />
                         </div>
@@ -376,7 +375,69 @@ export function Settings() {
               </div>
             </div>
           )}
-          
+
+          {activeTab === 'payment' && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-indigo-600" />
+                  Payment Method Settings
+                </h2>
+              </div>
+              <div className="p-6">
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="stripe_secret_key" className="block text-sm font-medium text-gray-700 mb-2">
+                      Stripe Secret Key
+                    </label>
+                    <input
+                      id="stripe_secret_key"
+                      type="password"
+                      value={paymentSettings.stripe_secret_key}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, stripe_secret_key: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      placeholder="sk_test_..."
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="paypal_client_id" className="block text-sm font-medium text-gray-700 mb-2">
+                      PayPal Client ID
+                    </label>
+                    <input
+                      id="paypal_client_id"
+                      type="text"
+                      value={paymentSettings.paypal_client_id}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, paypal_client_id: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      placeholder="Enter PayPal Client ID"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="bkash_merchant_id" className="block text-sm font-medium text-gray-700 mb-2">
+                      bKash Merchant ID
+                    </label>
+                    <input
+                      id="bkash_merchant_id"
+                      type="text"
+                      value={paymentSettings.bkash_merchant_id}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, bkash_merchant_id: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      placeholder="Enter bKash Merchant ID"
+                    />
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Security:</strong> Payment credentials are encrypted and stored securely.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'plans' && (
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
