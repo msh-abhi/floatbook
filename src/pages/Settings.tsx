@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Users, LogOut, Mail, Trash2, UserPlus, Settings as SettingsIcon, CreditCard, Crown, MapPin, Key, Zap } from 'lucide-react';
+import { Building2, Users, LogOut, Mail, Trash2, UserPlus, Settings as SettingsIcon, CreditCard, Crown, Key, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
@@ -15,19 +15,24 @@ export function Settings() {
   const [saving, setSaving] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'company' | 'team' | 'email' | 'payment' | 'plans'>('company');
+  
   const [companyForm, setCompanyForm] = useState({
     name: '',
     logo_url: '',
     address: '',
+    currency: 'USD',
   });
+
   const [emailSettings, setEmailSettings] = useState({
     brevo_api_key: '',
   });
+  
   const [paymentSettings, setPaymentSettings] = useState({
     stripe_secret_key: '',
     paypal_client_id: '',
     bkash_merchant_id: '',
   });
+  
   const [inviteEmail, setInviteEmail] = useState('');
 
   useEffect(() => {
@@ -35,7 +40,8 @@ export function Settings() {
       setCompanyForm({
         name: company.name || '',
         logo_url: company.logo_url || '',
-        address: company.address || '', // Correctly populate address
+        address: company.address || '',
+        currency: company.currency || 'USD',
       });
     }
   }, [company]);
@@ -68,18 +74,18 @@ export function Settings() {
     setSaving(true);
 
     try {
-      // Correctly include all fields in the update
       const { error } = await updateCompany({
         name: companyForm.name,
         logo_url: companyForm.logo_url || null,
         address: companyForm.address || null,
+        currency: companyForm.currency,
       });
 
       if (error) {
         alert('Error updating company. Please try again.');
       } else {
         alert('Company information updated successfully!');
-        window.location.reload(); // Force a full refresh to reflect changes everywhere
+        window.location.reload();
       }
     } catch (error) {
       console.error('Error updating company:', error);
@@ -146,7 +152,6 @@ export function Settings() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Navigation */}
         <div className="lg:w-64">
           <nav className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
             {tabs.map((tab) => {
@@ -169,7 +174,6 @@ export function Settings() {
           </nav>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1">
           {activeTab === 'company' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -209,6 +213,24 @@ export function Settings() {
                         placeholder="Company address"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="company_currency" className="block text-sm font-medium text-gray-700 mb-2">
+                      Currency
+                    </label>
+                    <select
+                      id="company_currency"
+                      value={companyForm.currency}
+                      onChange={(e) => setCompanyForm({ ...companyForm, currency: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="BDT">BDT (৳)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="EUR">EUR (€)</option>
+                    </select>
+                    <p className="text-xs text-red-500 mt-1">Note: This only changes the currency symbol. No amounts will be converted.</p>
                   </div>
 
                   <div>
