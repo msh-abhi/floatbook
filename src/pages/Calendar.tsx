@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Eye, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useCompany } from '../hooks/useCompany';
 import { Booking, Room } from '../types';
+import { formatCurrency } from '../utils/currency';
 
 export function Calendar() {
   const { companyId } = useAuth();
+  const { company } = useCompany(companyId);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [bookings, setBookings] = useState<(Booking & { room: Room })[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -38,28 +41,22 @@ export function Calendar() {
     try {
       setLoading(true);
 
-      // Get start and end of current month view (including surrounding dates)
       const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
       const startDate = new Date(startOfMonth);
-      startDate.setDate(startDate.getDate() - 7); // Include previous week
+      startDate.setDate(startDate.getDate() - 7);
       const endDate = new Date(endOfMonth);
-      endDate.setDate(endDate.getDate() + 7); // Include next week
+      endDate.setDate(endDate.getDate() + 7);
 
-      // Fetch bookings for the month
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          room:rooms(*)
-        `)
+        .select(`*, room:rooms(*)`)
         .eq('company_id', companyId)
         .gte('check_in_date', startDate.toISOString().split('T')[0])
         .lte('check_in_date', endDate.toISOString().split('T')[0]);
 
       if (bookingsError) throw bookingsError;
 
-      // Fetch rooms
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
         .select('*')
@@ -87,7 +84,6 @@ export function Calendar() {
 
     const days = [];
     
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       const prevDate = new Date(year, month, -startingDayOfWeek + i + 1);
       days.push({
@@ -97,7 +93,6 @@ export function Calendar() {
       });
     }
 
-    // Add days of the current month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       days.push({
@@ -107,8 +102,7 @@ export function Calendar() {
       });
     }
 
-    // Add empty cells for days after the last day of the month
-    const remainingCells = 42 - days.length; // 6 rows × 7 days
+    const remainingCells = 42 - days.length;
     for (let day = 1; day <= remainingCells; day++) {
       const nextDate = new Date(year, month + 1, day);
       days.push({
@@ -128,11 +122,7 @@ export function Calendar() {
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonth(prev => {
       const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(prev.getMonth() - 1);
-      } else {
-        newDate.setMonth(prev.getMonth() + 1);
-      }
+      newDate.setMonth(prev.getMonth() + (direction === 'prev' ? -1 : 1));
       return newDate;
     });
   };
@@ -145,11 +135,6 @@ export function Calendar() {
 
   const handleCreateBooking = () => {
     if (!selectedDate) return;
-    
-    // Set check-out date to next day
-    const checkInDate = new Date(selectedDate);
-    checkInDate.setDate(checkInDate.getDate() + 1);
-    const checkOutDate = checkInDate.toISOString().split('T')[0];
     
     setFormData({
       room_id: '',
@@ -212,23 +197,12 @@ export function Calendar() {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
   const isToday = (dateString: string) => {
     return dateString === new Date().toISOString().split('T')[0];
   };
 
   const getBookingColorClass = (booking: Booking) => {
-    if (booking.is_paid) {
-      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    } else {
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    }
+    return booking.is_paid ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200';
   };
 
   const days = getDaysInMonth();
@@ -288,7 +262,6 @@ export function Calendar() {
 
         {/* Calendar Grid */}
         <div className="p-6">
-          {/* Week Days Header */}
           <div className="grid grid-cols-7 gap-2 mb-4">
             {weekDays.map(day => (
               <div key={day} className="text-center text-sm font-semibold text-gray-600 py-3 bg-gray-50 rounded-lg">
@@ -297,7 +270,6 @@ export function Calendar() {
             ))}
           </div>
 
-          {/* Calendar Days */}
           <div className="grid grid-cols-7 gap-2">
             {days.map((day, index) => {
               const dayBookings = getBookingsForDate(day.fullDate);
@@ -311,16 +283,10 @@ export function Calendar() {
                     day.isCurrentMonth
                       ? 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
                       : 'bg-gray-50 border-gray-100 text-gray-400'
-                  } ${
-                    isToday(day.fullDate)
-                      ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100'
-                      : ''
-                  }`}
+                  } ${isToday(day.fullDate) ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100' : ''}`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`text-lg font-semibold ${
-                      isToday(day.fullDate) ? 'text-blue-700' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                    }`}>
+                    <span className={`text-lg font-semibold ${isToday(day.fullDate) ? 'text-blue-700' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
                       {day.date}
                     </span>
                     {day.isCurrentMonth && availableRooms > 0 && (
@@ -333,10 +299,7 @@ export function Calendar() {
                   {day.isCurrentMonth && (
                     <div className="space-y-1">
                       {dayBookings.slice(0, 2).map((booking) => (
-                        <div
-                          key={booking.id}
-                          className={`text-xs p-2 rounded-lg truncate font-medium border ${getBookingColorClass(booking)}`}
-                        >
+                        <div key={booking.id} className={`text-xs p-2 rounded-lg truncate font-medium border ${getBookingColorClass(booking)}`}>
                           {booking.customer_name}
                         </div>
                       ))}
@@ -361,12 +324,7 @@ export function Calendar() {
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-gray-900">
-                  {new Date(selectedDate).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </h3>
                 <button
                   onClick={() => setShowDateModal(false)}
@@ -414,19 +372,13 @@ export function Calendar() {
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900">{booking.customer_name}</p>
                           <p className="text-sm text-gray-600">{booking.room?.name}</p>
-                          {booking.customer_email && (
-                            <p className="text-sm text-gray-500">{booking.customer_email}</p>
-                          )}
+                          {booking.customer_email && <p className="text-sm text-gray-500">{booking.customer_email}</p>}
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-gray-900">
-                            {formatCurrency(Number(booking.total_amount))}
+                            {formatCurrency(Number(booking.total_amount), company?.currency)}
                           </p>
-                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            booking.is_paid 
-                              ? 'bg-emerald-100 text-emerald-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${booking.is_paid ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}`}>
                             {booking.is_paid ? 'Paid' : 'Pending'}
                           </span>
                         </div>
@@ -441,12 +393,12 @@ export function Calendar() {
       )}
 
       {/* Booking Creation Modal */}
-      {showBookingModal && (
+      {showBookingModal && selectedDate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900">
-                Create Booking for {new Date(selectedDate!).toLocaleDateString()}
+                Create Booking for {new Date(selectedDate + 'T00:00:00').toLocaleDateString()}
               </h2>
             </div>
 
@@ -467,7 +419,7 @@ export function Calendar() {
                     .filter(room => !getBookingsForDate(selectedDate!).some(b => b.room_id === room.id))
                     .map((room) => (
                       <option key={room.id} value={room.id}>
-                        {room.name} - ${room.price}
+                        {room.name} - {formatCurrency(room.price, company?.currency)}
                       </option>
                     ))}
                 </select>
@@ -518,7 +470,7 @@ export function Calendar() {
 
               <div>
                 <label htmlFor="total_amount" className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Price *
+                  Total Price ({company?.currency}) *
                 </label>
                 <input
                   id="total_amount"
