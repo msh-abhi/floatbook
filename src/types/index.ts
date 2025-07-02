@@ -78,4 +78,13 @@ export interface ReportDiscount {
 
 export interface ReportOccupancy {
   occupancy_rate: number;
+} 
+
+export interface Company {
+  id: string;
+  name: string;
+  logo_url?: string;
+  address?: string;
+  created_at: string;
 }
+// ... rest of the file
