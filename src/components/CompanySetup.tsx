@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 
 export function CompanySetup() {
   const [companyName, setCompanyName] = useState('');
+  const [currency, setCurrency] = useState('USD'); // Add currency state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, refreshCompany } = useAuth();
@@ -17,10 +18,10 @@ export function CompanySetup() {
     setError(null);
 
     try {
-      // 1. Create the company in the database
+      // 1. Create the company in the database, now with currency
       const { data: company, error: companyInsertError } = await supabase
         .from('companies')
-        .insert([{ name: companyName.trim() }])
+        .insert([{ name: companyName.trim(), currency: currency }]) // Add currency here
         .select()
         .single();
 
@@ -28,21 +29,20 @@ export function CompanySetup() {
         throw new Error(companyInsertError.message);
       }
 
-      // 2. Fetch the full, up-to-date user object to get the email, as requested.
+      // 2. Fetch the full, up-to-date user object to get the email
       const { data: { user: fullUser }, error: authError } = await supabase.auth.getUser();
 
       if (authError || !fullUser) {
         throw new Error('Could not fetch user details. Please try again.');
       }
 
-      // 3. Add the user to the company, using the fetched email.
-      // I've used a unique variable name 'userInsertError' to fix the previous bug.
+      // 3. Add the user to the company
       const { error: userInsertError } = await supabase
         .from('company_users')
         .insert([{
           company_id: company.id,
           user_id: fullUser.id,
-          user_email: fullUser.email, // This now works because you added the column.
+          user_email: fullUser.email,
           role: 'admin'
         }]);
 
@@ -54,9 +54,8 @@ export function CompanySetup() {
       await refreshCompany();
 
     } catch (err) {
-      // If any step fails, catch the error and display it.
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
-      setLoading(false); // Make sure to stop loading on error.
+      setLoading(false);
     }
   };
 
@@ -103,6 +102,25 @@ export function CompanySetup() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 placeholder="Enter your company name"
               />
+            </div>
+
+            {/* New Currency Field */}
+            <div>
+              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
+                Default Currency
+              </label>
+              <select
+                id="currency"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+              >
+                <option value="USD">USD ($)</option>
+                <option value="BDT">BDT (৳)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="EUR">EUR (€)</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">This will be the currency for all your bookings.</p>
             </div>
 
             <button
