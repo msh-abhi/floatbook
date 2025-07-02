@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, DollarSign, Users, TrendingUp, Clock, Plus, CheckCircle } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Clock, Plus, CheckCircle, CircleDollarSign } from 'lucide-react'; // Changed here
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { Booking, Room } from '../types';
+import { formatCurrency } from '../utils/currency';
 
 export function Dashboard() {
   const { companyId } = useAuth();
@@ -33,21 +34,15 @@ export function Dashboard() {
     try {
       setLoading(true);
 
-      // Get today's date
       const today = new Date().toISOString().split('T')[0];
 
-      // Fetch bookings with room data
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          room:rooms(*)
-        `)
+        .select(`*, room:rooms(*)`)
         .eq('company_id', companyId);
 
       if (bookingsError) throw bookingsError;
 
-      // Fetch rooms for calculating occupancy
       const { data: rooms, error: roomsError } = await supabase
         .from('rooms')
         .select('*')
@@ -55,16 +50,13 @@ export function Dashboard() {
 
       if (roomsError) throw roomsError;
 
-      // Calculate stats
       const totalRevenue = bookings?.reduce((sum, booking) => sum + Number(booking.total_amount), 0) || 0;
       const totalBookings = bookings?.length || 0;
       const todayBookingsData = bookings?.filter(booking => booking.check_in_date === today) || [];
       const todayBookingsCount = todayBookingsData.length;
       
-      // Calculate occupancy rate (today's bookings / total rooms)
       const occupancyRate = rooms?.length ? (todayBookingsCount / rooms.length) * 100 : 0;
 
-      // Get upcoming bookings (next 7 days)
       const nextWeek = new Date();
       nextWeek.setDate(nextWeek.getDate() + 7);
       const nextWeekStr = nextWeek.toISOString().split('T')[0];
@@ -81,7 +73,7 @@ export function Dashboard() {
       });
 
       setTodayBookings(todayBookingsData);
-      setUpcomingBookings(upcomingBookingsData.slice(0, 5)); // Show next 5
+      setUpcomingBookings(upcomingBookingsData.slice(0, 5));
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -103,14 +95,7 @@ export function Dashboard() {
       console.error('Error updating payment status:', error);
     }
   };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
+  
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'short',
@@ -148,8 +133,8 @@ export function Dashboard() {
   const statCards = [
     {
       title: 'Total Revenue',
-      value: formatCurrency(stats.totalRevenue),
-      icon: DollarSign,
+      value: formatCurrency(stats.totalRevenue, company?.currency),
+      icon: CircleDollarSign, // Changed here
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
     },
@@ -219,7 +204,6 @@ export function Dashboard() {
 
       {/* Bookings Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        {/* Tab Navigation */}
         <div className="border-b border-gray-100">
           <div className="flex">
             <button
@@ -251,7 +235,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Tab Content */}
         <div className="p-6">
           {activeTab === 'today' ? (
             todayBookings.length === 0 ? (
@@ -275,10 +258,10 @@ export function Dashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount))}</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount), company?.currency)}</p>
                         {booking.advance_paid > 0 && (
                           <p className="text-xs text-gray-500">
-                            Advance: {formatCurrency(Number(booking.advance_paid))}
+                            Advance: {formatCurrency(Number(booking.advance_paid), company?.currency)}
                           </p>
                         )}
                       </div>
@@ -290,17 +273,7 @@ export function Dashboard() {
                             : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                         }`}
                       >
-                        {booking.is_paid ? (
-                          <>
-                            <CheckCircle className="h-3 w-3" />
-                            Paid
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-3 w-3" />
-                            Mark Paid
-                          </>
-                        )}
+                        {booking.is_paid ? ( <> <CheckCircle className="h-3 w-3" /> Paid </> ) : ( <> <Clock className="h-3 w-3" /> Mark Paid </> )}
                       </button>
                     </div>
                   </div>
@@ -329,10 +302,10 @@ export function Dashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount))}</p>
+                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount), company?.currency)}</p>
                         {booking.advance_paid > 0 && (
                           <p className="text-xs text-gray-500">
-                            Advance: {formatCurrency(Number(booking.advance_paid))}
+                            Advance: {formatCurrency(Number(booking.advance_paid), company?.currency)}
                           </p>
                         )}
                       </div>
@@ -344,17 +317,7 @@ export function Dashboard() {
                             : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                         }`}
                       >
-                        {booking.is_paid ? (
-                          <>
-                            <CheckCircle className="h-3 w-3" />
-                            Paid
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="h-3 w-3" />
-                            Mark Paid
-                          </>
-                        )}
+                        {booking.is_paid ? ( <> <CheckCircle className="h-3 w-3" /> Paid </> ) : ( <> <Clock className="h-3 w-3" /> Mark Paid </> )}
                       </button>
                     </div>
                   </div>
