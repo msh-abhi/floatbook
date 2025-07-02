@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { DoorOpen, Plus, Edit, Trash2, Users, DollarSign } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useCompany } from '../hooks/useCompany';
 import { Room } from '../types';
+import { formatCurrency } from '../utils/currency';
 
 export function Rooms() {
   const { companyId } = useAuth();
+  const { company } = useCompany(companyId);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -193,7 +196,7 @@ export function Rooms() {
                       <span className="text-sm">Price per booking</span>
                     </div>
                     <span className="text-lg font-semibold text-gray-900">
-                      ${room.price}
+                      {formatCurrency(room.price, company?.currency)}
                     </span>
                   </div>
 
@@ -241,7 +244,7 @@ export function Rooms() {
 
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                  Price per Booking ($)
+                  Price per Booking ({company?.currency})
                 </label>
                 <input
                   id="price"
