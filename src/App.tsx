@@ -11,6 +11,7 @@ import { useAuth } from './hooks/useAuth';
 const Bookings = React.lazy(() => import('./pages/Bookings').then(module => ({ default: module.Bookings })));
 const Calendar = React.lazy(() => import('./pages/Calendar').then(module => ({ default: module.Calendar })));
 const Settings = React.lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
+const Reports = React.lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
 
 function App() {
   const { user, loading, companyId } = useAuth();
@@ -57,6 +58,14 @@ function App() {
                 <Calendar />
               </React.Suspense>
             } 
+          />
+          <Route
+            path="reports"
+            element={
+              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+                <Reports />
+              </React.Suspense>
+            }
           />
           <Route 
             path="settings" 
