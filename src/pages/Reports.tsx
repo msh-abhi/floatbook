@@ -87,19 +87,12 @@ export function Reports() {
       discount_status_param: discountStatus,
     };
     
-    // Parameters for functions that don't use all filters
-    const occupancyParams = {
-        company_id_param: companyId,
-        start_date: dateRange.start,
-        end_date: dateRange.end,
-        room_ids_param: selectedRoom === 'all' ? null : [selectedRoom],
-    }
-    
-    const discountParams = {
-        ...rpcParams,
-        discount_status_param: undefined // discount report doesn't use this
-    }
-
+    // Parameters for functions that only accept basic parameters
+    const basicParams = {
+      company_id_param: companyId,
+      start_date: dateRange.start,
+      end_date: dateRange.end,
+    };
 
     try {
       const [
@@ -112,8 +105,8 @@ export function Reports() {
         supabase.rpc('get_daily_booking_stats', rpcParams),
         supabase.rpc('get_room_stats', rpcParams),
         supabase.rpc('get_financial_summary', rpcParams),
-        supabase.rpc('get_discount_report', discountParams),
-        supabase.rpc('get_occupancy_report', occupancyParams),
+        supabase.rpc('get_discount_report', basicParams),
+        supabase.rpc('get_occupancy_report', basicParams),
       ]);
 
       if (dailyStatsResult.error) throw dailyStatsResult.error;
