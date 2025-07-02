@@ -45,6 +45,8 @@ export interface Booking {
   advance_paid: number;
   referred_by?: string;
   notes?: string;
+  guest_count: number; // Add this
+  booking_type: string; // Add this
   created_at: string;
   room?: Room;
 }
@@ -95,26 +97,4 @@ export interface Company {
   address?: string;
   currency?: string; // Add this line
   created_at: string;
-}
-
-export interface Booking {
-  id: string;
-  company_id: string;
-  room_id: string;
-  check_in_date: string;
-  check_out_date: string;
-  customer_name: string;
-  customer_email?: string;
-  customer_phone?: string;
-  is_paid: boolean;
-  total_amount: number;
-  discount_type: 'fixed' | 'percentage';
-  discount_value: number;
-  advance_paid: number;
-  referred_by?: string;
-  notes?: string;
-  guest_count: number; // Add this
-  booking_type: string; // Add this
-  created_at: string;
-  room?: Room;
 }
