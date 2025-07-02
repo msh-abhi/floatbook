@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Plus, Edit, Trash2, Calendar, User, Mail, Phone, CheckCircle, Clock, DollarSign, Percent, UserCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useCompany } from '../hooks/useCompany';
 import { Booking, Room } from '../types';
+import { formatCurrency } from '../utils/currency';
 
 export function Bookings() {
   const { companyId } = useAuth();
+  const { company } = useCompany(companyId);
   const [bookings, setBookings] = useState<(Booking & { room: Room })[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,10 +52,7 @@ export function Bookings() {
       // Fetch bookings with room data
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          room:rooms(*)
-        `)
+        .select(`*, room:rooms(*)`)
         .eq('company_id', companyId)
         .order('check_in_date', { ascending: false });
 
@@ -110,7 +110,7 @@ export function Bookings() {
         advance_paid: parseFloat(formData.advance_paid),
         referred_by: formData.referred_by || null,
         notes: formData.notes || null,
-        is_paid: false,
+        is_paid: false, // Default to unpaid
       };
 
       if (editingBooking) {
@@ -232,13 +232,6 @@ export function Bookings() {
     return `${formatDate(checkIn)} - ${formatDate(checkOut)}`;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
   if (loading) {
     return (
       <div className="p-4 lg:p-8">
@@ -356,14 +349,14 @@ export function Bookings() {
                   <div className="flex items-center gap-2 text-gray-600">
                     <DollarSign className="h-4 w-4" />
                     <span className="font-semibold text-gray-900">
-                      {formatCurrency(Number(booking.total_amount))}
+                      {formatCurrency(Number(booking.total_amount), company?.currency)}
                     </span>
                   </div>
                   {booking.advance_paid > 0 && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <span className="text-xs">Advance:</span>
                       <span className="font-medium text-emerald-600">
-                        {formatCurrency(Number(booking.advance_paid))}
+                        {formatCurrency(Number(booking.advance_paid), company?.currency)}
                       </span>
                     </div>
                   )}
@@ -415,7 +408,7 @@ export function Bookings() {
                       <option value="">Select a room</option>
                       {rooms.map((room) => (
                         <option key={room.id} value={room.id}>
-                          {room.name} - ${room.price}
+                          {room.name} - {formatCurrency(room.price, company?.currency)}
                         </option>
                       ))}
                     </select>
@@ -512,7 +505,7 @@ export function Bookings() {
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="total_amount" className="block text-sm font-medium text-gray-700 mb-1">
-                      Total Price *
+                      Total Price ({company?.currency}) *
                     </label>
                     <input
                       id="total_amount"
@@ -585,7 +578,7 @@ export function Bookings() {
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-600">Due Amount:</span>
                       <span className="text-lg font-semibold text-gray-900">
-                        {formatCurrency(calculateDueAmount())}
+                        {formatCurrency(calculateDueAmount(), company?.currency)}
                       </span>
                     </div>
                   </div>
