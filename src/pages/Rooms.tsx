@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DoorOpen, Plus, Edit, Trash2, Users, DollarSign } from 'lucide-react';
+import { DoorOpen, Plus, Edit, Trash2, Users, CircleDollarSign } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
@@ -192,7 +192,7 @@ export function Rooms() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <DollarSign className="h-4 w-4" />
+                      <CircleDollarSign className="h-4 w-4" />
                       <span className="text-sm">Price per booking</span>
                     </div>
                     <span className="text-lg font-semibold text-gray-900">
