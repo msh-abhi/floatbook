@@ -48,3 +48,34 @@ export interface Booking {
   created_at: string;
   room?: Room;
 }
+
+// New Report Types
+export interface ReportDailyStat {
+  report_date: string;
+  total_bookings: number;
+  total_revenue: number;
+  new_customers: number;
+}
+
+export interface ReportRoomStat {
+  room_name: string;
+  total_bookings: number;
+  total_revenue: number;
+}
+
+export interface ReportFinancialSummary {
+  paid_revenue: number;
+  unpaid_revenue: number;
+  total_advance: number;
+  total_due: number;
+}
+
+export interface ReportDiscount {
+  discount_type: 'fixed' | 'percentage';
+  booking_count: number;
+  total_discounted: number;
+}
+
+export interface ReportOccupancy {
+  occupancy_rate: number;
+}
