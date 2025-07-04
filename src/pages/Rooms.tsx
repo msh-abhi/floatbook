@@ -134,12 +134,12 @@ export function Rooms() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Rooms</h1>
-          <p className="text-gray-600">Manage your available rooms and their details.</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Rooms</h1>
+          <p className="text-slate-600">Manage your available rooms and their details.</p>
         </div>
         <button
           onClick={openModal}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
+          className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
         >
           <Plus className="h-5 w-5" />
           Add Room
@@ -150,11 +150,11 @@ export function Rooms() {
       {rooms.length === 0 ? (
         <div className="text-center py-12">
           <DoorOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No rooms yet</h3>
-          <p className="text-gray-600 mb-6">Get started by adding your first room.</p>
+          <h3 className="text-lg font-medium text-slate-900 mb-2">No rooms yet</h3>
+          <p className="text-slate-600 mb-6">Get started by adding your first room.</p>
           <button
             onClick={openModal}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Add Your First Room
           </button>
@@ -166,23 +166,23 @@ export function Rooms() {
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center">
-                      <DoorOpen className="h-6 w-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg flex items-center justify-center">
+                      <DoorOpen className="h-6 w-6 text-emerald-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{room.name}</h3>
+                      <h3 className="text-lg font-semibold text-slate-900">{room.name}</h3>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(room)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(room.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -191,21 +191,21 @@ export function Rooms() {
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-slate-600">
                       <CircleDollarSign className="h-4 w-4" />
                       <span className="text-sm">Price per booking</span>
                     </div>
-                    <span className="text-lg font-semibold text-gray-900">
+                    <span className="text-lg font-semibold text-slate-900">
                       {formatCurrency(room.price, company?.currency)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-slate-600">
                       <Users className="h-4 w-4" />
                       <span className="text-sm">Capacity</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-slate-900">
                       {room.capacity} {room.capacity === 1 ? 'person' : 'people'}
                     </span>
                   </div>
@@ -218,17 +218,17 @@ export function Rooms() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-slate-900">
                 {editingRoom ? 'Edit Room' : 'Add New Room'}
               </h2>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
                   Room Name
                 </label>
                 <input
@@ -237,13 +237,13 @@ export function Rooms() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="e.g. Conference Room A"
                 />
               </div>
 
               <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="price" className="block text-sm font-medium text-slate-700 mb-1">
                   Price per Booking ({company?.currency})
                 </label>
                 <input
@@ -254,13 +254,13 @@ export function Rooms() {
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="0.00"
                 />
               </div>
 
               <div>
-                <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="capacity" className="block text-sm font-medium text-slate-700 mb-1">
                   Capacity (People)
                 </label>
                 <input
@@ -270,7 +270,7 @@ export function Rooms() {
                   value={formData.capacity}
                   onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="1"
                 />
               </div>
@@ -279,13 +279,13 @@ export function Rooms() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   {editingRoom ? 'Update Room' : 'Add Room'}
                 </button>

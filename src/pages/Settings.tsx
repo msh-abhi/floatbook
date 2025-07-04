@@ -133,8 +133,8 @@ export function Settings() {
 
   const plans = [
     { name: 'Free Plan', price: '$0', period: '/month', features: ['2 rooms', '10 bookings/month', 'Basic support'], current: true, color: 'gray' },
-    { name: 'Basic Plan', price: '$29', period: '/month', features: ['10 rooms', '50 bookings/month', 'Email support', 'Analytics'], current: false, color: 'blue' },
-    { name: 'Pro Plan', price: '$99', period: '/month', features: ['Unlimited rooms', 'Unlimited bookings', 'Priority support', 'Advanced analytics', 'API access'], current: false, color: 'purple' },
+    { name: 'Basic Plan', price: '$29', period: '/month', features: ['10 rooms', '50 bookings/month', 'Email support', 'Analytics'], current: false, color: 'emerald' },
+    { name: 'Pro Plan', price: '$99', period: '/month', features: ['Unlimited rooms', 'Unlimited bookings', 'Priority support', 'Advanced analytics', 'API access'], current: false, color: 'emerald' },
   ];
 
   if (loading) {
@@ -154,8 +154,8 @@ export function Settings() {
   return (
     <div className="p-4 lg:p-8 max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your company settings and preferences.</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
+        <p className="text-slate-600">Manage your company settings and preferences.</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -167,10 +167,10 @@ export function Settings() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg transition-all ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 shadow-sm'
+                      : 'text-slate-700 hover:bg-gray-50'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -185,8 +185,8 @@ export function Settings() {
           {activeTab === 'company' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-emerald-600" />
                   Company Information
                 </h2>
               </div>
@@ -194,7 +194,7 @@ export function Settings() {
                 <form onSubmit={handleUpdateCompany} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="company_name" className="block text-sm font-medium text-slate-700 mb-2">
                         Company Name *
                       </label>
                       <input
@@ -203,12 +203,12 @@ export function Settings() {
                         value={companyForm.name}
                         onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="address" className="block text-sm font-medium text-slate-700 mb-2">
                         Address
                       </label>
                       <input
@@ -216,21 +216,21 @@ export function Settings() {
                         type="text"
                         value={companyForm.address}
                         onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                         placeholder="Company address"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="company_currency" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="company_currency" className="block text-sm font-medium text-slate-700 mb-2">
                       Currency
                     </label>
                     <select
                       id="company_currency"
                       value={companyForm.currency}
                       onChange={(e) => setCompanyForm({ ...companyForm, currency: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     >
                       <option value="USD">USD ($)</option>
                       <option value="BDT">BDT (৳)</option>
@@ -241,7 +241,7 @@ export function Settings() {
                   </div>
 
                   <div>
-                    <label htmlFor="logo_url" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="logo_url" className="block text-sm font-medium text-slate-700 mb-2">
                       Logo URL
                     </label>
                     <div className="flex gap-3">
@@ -250,7 +250,7 @@ export function Settings() {
                         type="url"
                         value={companyForm.logo_url}
                         onChange={(e) => setCompanyForm({ ...companyForm, logo_url: e.target.value })}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                         placeholder="https://example.com/logo.png"
                       />
                       {companyForm.logo_url && (
@@ -272,7 +272,7 @@ export function Settings() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
                       {saving ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -286,13 +286,13 @@ export function Settings() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Users className="h-5 w-5 text-purple-600" />
+                  <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-emerald-600" />
                     Team Members
                   </h2>
                   <button
                     onClick={() => setShowInviteModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
+                    className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2"
                   >
                     <UserPlus className="h-4 w-4" />
                     Invite User
@@ -303,27 +303,27 @@ export function Settings() {
                 {companyUsers.length === 0 ? (
                   <div className="text-center py-12">
                     <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No team members yet</h3>
-                    <p className="text-gray-600">Invite your first team member to get started.</p>
+                    <h3 className="text-lg font-medium text-slate-900 mb-2">No team members yet</h3>
+                    <p className="text-slate-600">Invite your first team member to get started.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {companyUsers.map((companyUser) => (
                       <div key={companyUser.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
                             <span className="text-white text-lg font-semibold">
                               {companyUser.user_email?.charAt(0).toUpperCase() || 'U'}
                             </span>
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-semibold text-slate-900">
                               {companyUser.user_email || 'Unknown User'}
                             </p>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600 capitalize">{companyUser.role}</span>
+                              <span className="text-sm text-slate-600 capitalize">{companyUser.role}</span>
                               {companyUser.user_id === user?.id && (
-                                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-medium">
+                                <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full font-medium">
                                   You
                                 </span>
                               )}
@@ -331,7 +331,7 @@ export function Settings() {
                           </div>
                         </div>
                         {companyUser.user_id !== user?.id && (
-                          <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                             <Trash2 className="h-5 w-5" />
                           </button>
                         )}
@@ -346,7 +346,7 @@ export function Settings() {
           {activeTab === 'email' && (
              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <Mail className="h-5 w-5 text-emerald-600" />
                   Email Settings
                 </h2>
@@ -354,11 +354,11 @@ export function Settings() {
               <div className="p-6">
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="brevo_api_key" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="brevo_api_key" className="block text-sm font-medium text-slate-700 mb-2">
                       Brevo API Key
                     </label>
                     <div className="relative">
-                      <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                       <input
                         id="brevo_api_key"
                         type="password"
@@ -368,13 +368,13 @@ export function Settings() {
                         placeholder="Enter your Brevo API key"
                       />
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-slate-500 mt-2">
                       Used for sending booking confirmations and notifications.
                     </p>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-700">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                    <p className="text-sm text-emerald-700">
                       <strong>Note:</strong> Email settings are stored securely and used for automated notifications.
                     </p>
                   </div>
@@ -386,15 +386,15 @@ export function Settings() {
           {activeTab === 'payment' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-indigo-600" />
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-emerald-600" />
                   Payment Method Settings
                 </h2>
               </div>
               <div className="p-6">
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="stripe_secret_key" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="stripe_secret_key" className="block text-sm font-medium text-slate-700 mb-2">
                       Stripe Secret Key
                     </label>
                     <input
@@ -402,13 +402,13 @@ export function Settings() {
                       type="password"
                       value={paymentSettings.stripe_secret_key}
                       onChange={(e) => setPaymentSettings({ ...paymentSettings, stripe_secret_key: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                       placeholder="sk_test_..."
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="paypal_client_id" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="paypal_client_id" className="block text-sm font-medium text-slate-700 mb-2">
                       PayPal Client ID
                     </label>
                     <input
@@ -416,13 +416,13 @@ export function Settings() {
                       type="text"
                       value={paymentSettings.paypal_client_id}
                       onChange={(e) => setPaymentSettings({ ...paymentSettings, paypal_client_id: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                       placeholder="Enter PayPal Client ID"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="bkash_merchant_id" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="bkash_merchant_id" className="block text-sm font-medium text-slate-700 mb-2">
                       bKash Merchant ID
                     </label>
                     <input
@@ -430,7 +430,7 @@ export function Settings() {
                       type="text"
                       value={paymentSettings.bkash_merchant_id}
                       onChange={(e) => setPaymentSettings({ ...paymentSettings, bkash_merchant_id: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                       placeholder="Enter bKash Merchant ID"
                     />
                   </div>
@@ -449,7 +449,7 @@ export function Settings() {
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="p-6 border-b border-gray-100">
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                     <Crown className="h-5 w-5 text-yellow-600" />
                     Subscription Plans
                   </h2>
@@ -461,26 +461,26 @@ export function Settings() {
                         key={plan.name}
                         className={`relative rounded-xl border-2 p-6 ${
                           plan.current
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-emerald-500 bg-emerald-50'
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         } transition-all`}
                       >
                         {plan.current && (
                           <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                            <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-medium">
                               Current Plan
                             </span>
                           </div>
                         )}
                         
                         <div className="text-center">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{plan.name}</h3>
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">{plan.name}</h3>
                           <div className="mb-4">
-                            <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
-                            <span className="text-gray-600">{plan.period}</span>
+                            <span className="text-3xl font-bold text-slate-900">{plan.price}</span>
+                            <span className="text-slate-600">{plan.period}</span>
                           </div>
                           
-                          <ul className="space-y-2 mb-6 text-sm text-gray-600">
+                          <ul className="space-y-2 mb-6 text-sm text-slate-600">
                             {plan.features.map((feature, index) => (
                               <li key={index} className="flex items-center gap-2">
                                 <Zap className="h-4 w-4 text-emerald-500" />
@@ -491,11 +491,9 @@ export function Settings() {
                           
                           {!plan.current && (
                             <button
-                              className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
-                                plan.color === 'blue'
-                                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                  : plan.color === 'purple'
-                                  ? 'bg-purple-600 text-white hover:bg-purple-700'
+                              className={`w-full py-2 px-4 rounded-xl font-medium transition-all ${
+                                plan.color === 'emerald'
+                                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                   : 'bg-gray-600 text-white hover:bg-gray-700'
                               }`}
                             >
@@ -512,13 +510,13 @@ export function Settings() {
               {/* Account Section */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="p-6 border-b border-gray-100">
-                  <h2 className="text-lg font-semibold text-gray-900">Account</h2>
+                  <h2 className="text-lg font-semibold text-slate-900">Account</h2>
                 </div>
                 <div className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">Signed in as</h3>
-                      <p className="text-sm text-gray-600">{user?.email}</p>
+                      <h3 className="text-sm font-medium text-slate-900 mb-1">Signed in as</h3>
+                      <p className="text-sm text-slate-600">{user?.email}</p>
                     </div>
                     <button
                       onClick={handleSignOut}
@@ -536,33 +534,33 @@ export function Settings() {
       </div>
 
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900">Invite Team Member</h2>
+              <h2 className="text-xl font-semibold text-slate-900">Invite Team Member</h2>
             </div>
 
             <form onSubmit={handleInviteUser} className="p-6 space-y-4">
               <div>
-                <label htmlFor="invite_email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="invite_email" className="block text-sm font-medium text-slate-700 mb-1">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <input
                     id="invite_email"
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     placeholder="colleague@company.com"
                   />
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-700">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <p className="text-sm text-emerald-700">
                   <strong>Note:</strong> This is a demo feature. In a production environment,
                   this would send an invitation email to the user.
                 </p>
@@ -575,13 +573,13 @@ export function Settings() {
                     setShowInviteModal(false);
                     setInviteEmail('');
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   Send Invitation
                 </button>
