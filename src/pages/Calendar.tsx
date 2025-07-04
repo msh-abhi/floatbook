@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, X, DoorOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
@@ -119,6 +119,11 @@ export function Calendar() {
     return bookings.filter(booking => booking.check_in_date === dateString);
   };
 
+  const getAvailableRoomsForDate = (dateString: string) => {
+    const bookedRoomIds = getBookingsForDate(dateString).map(booking => booking.room_id);
+    return rooms.filter(room => !bookedRoomIds.includes(room.id));
+  };
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonth(prev => {
       const newDate = new Date(prev);
@@ -214,7 +219,7 @@ export function Calendar() {
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-64"></div>
           <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="grid grid-cols-7 gap-4 h-96">
+            <div className="grid grid-cols-7 gap-1 h-96">
               {Array.from({ length: 42 }).map((_, i) => (
                 <div key={i} className="bg-gray-100 rounded h-20"></div>
               ))}
@@ -262,49 +267,49 @@ export function Calendar() {
 
         {/* Calendar Grid */}
         <div className="p-6">
-          <div className="grid grid-cols-7 gap-2 mb-4">
+          <div className="grid grid-cols-7 gap-1 mb-4">
             {weekDays.map(day => (
-              <div key={day} className="text-center text-sm font-semibold text-slate-600 py-3 bg-gray-50 rounded-lg">
+              <div key={day} className="text-center text-sm font-semibold text-slate-600 py-2 bg-gray-50 rounded-lg">
                 {day}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1">
             {days.map((day, index) => {
               const dayBookings = getBookingsForDate(day.fullDate);
-              const availableRooms = rooms.length - dayBookings.length;
+              const availableRooms = getAvailableRoomsForDate(day.fullDate);
               
               return (
                 <div
                   key={index}
                   onClick={() => handleDateClick(day.fullDate, day.isCurrentMonth)}
-                  className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
+                  className={`h-28 p-2 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
                     day.isCurrentMonth
                       ? 'bg-white border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
                       : 'bg-gray-50 border-gray-100 text-gray-400'
                   } ${isToday(day.fullDate) ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-100' : ''}`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-lg font-semibold ${isToday(day.fullDate) ? 'text-emerald-700' : day.isCurrentMonth ? 'text-slate-900' : 'text-gray-400'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-base font-semibold ${isToday(day.fullDate) ? 'text-emerald-700' : day.isCurrentMonth ? 'text-slate-900' : 'text-gray-400'}`}>
                       {day.date}
                     </span>
-                    {day.isCurrentMonth && availableRooms > 0 && (
-                      <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full font-medium">
-                        {availableRooms} free
+                    {day.isCurrentMonth && availableRooms.length > 0 && (
+                      <span className="text-xs text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full font-medium">
+                        {availableRooms.length}
                       </span>
                     )}
                   </div>
                   
                   {day.isCurrentMonth && (
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       {dayBookings.slice(0, 2).map((booking) => (
-                        <div key={booking.id} className={`text-xs p-2 rounded-lg truncate font-medium border ${getBookingColorClass(booking)}`}>
+                        <div key={booking.id} className={`text-xs p-1.5 rounded-md truncate font-medium border ${getBookingColorClass(booking)}`}>
                           {booking.customer_name}
                         </div>
                       ))}
                       {dayBookings.length > 2 && (
-                        <div className="text-xs text-slate-500 font-medium">
+                        <div className="text-xs text-slate-500 font-medium px-1.5">
                           +{dayBookings.length - 2} more
                         </div>
                       )}
@@ -320,7 +325,7 @@ export function Calendar() {
       {/* Date Details Modal */}
       {showDateModal && selectedDate && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-slate-900">
@@ -336,37 +341,16 @@ export function Calendar() {
             </div>
             
             <div className="p-6">
-              {getBookingsForDate(selectedDate).length === 0 ? (
-                <div className="text-center py-8">
-                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium text-slate-900 mb-2">No bookings for this date</h4>
-                  <p className="text-slate-600 mb-6">Would you like to create a new booking?</p>
-                  <button
-                    onClick={handleCreateBooking}
-                    disabled={rooms.length === 0}
-                    className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
-                  >
-                    <Plus className="h-5 w-5" />
-                    Create Booking
-                  </button>
-                </div>
-              ) : (
-                <div>
+              {/* Existing Bookings */}
+              {getBookingsForDate(selectedDate).length > 0 && (
+                <div className="mb-6">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-lg font-medium text-slate-900">
                       {getBookingsForDate(selectedDate).length} Booking{getBookingsForDate(selectedDate).length !== 1 ? 's' : ''}
                     </h4>
-                    <button
-                      onClick={handleCreateBooking}
-                      disabled={rooms.length === 0}
-                      className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Booking
-                    </button>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-3 mb-6">
                     {getBookingsForDate(selectedDate).map((booking) => (
                       <div key={booking.id} className={`flex items-center justify-between p-4 rounded-lg border ${getBookingColorClass(booking)}`}>
                         <div className="flex-1">
@@ -387,6 +371,43 @@ export function Calendar() {
                   </div>
                 </div>
               )}
+
+              {/* Available Rooms */}
+              {getAvailableRoomsForDate(selectedDate).length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-medium text-slate-900 mb-3 flex items-center gap-2">
+                    <DoorOpen className="h-5 w-5 text-emerald-600" />
+                    Available Rooms ({getAvailableRoomsForDate(selectedDate).length})
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {getAvailableRoomsForDate(selectedDate).map((room) => (
+                      <div key={room.id} className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                        <p className="text-sm font-medium text-emerald-800">{room.name}</p>
+                        <p className="text-xs text-emerald-600">{formatCurrency(room.price, company?.currency)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No bookings state */}
+              {getBookingsForDate(selectedDate).length === 0 && (
+                <div className="text-center py-6 mb-6">
+                  <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <h4 className="text-lg font-medium text-slate-900 mb-2">No bookings for this date</h4>
+                  <p className="text-slate-600">All rooms are available for booking.</p>
+                </div>
+              )}
+
+              {/* Create Booking Button */}
+              <button
+                onClick={handleCreateBooking}
+                disabled={getAvailableRoomsForDate(selectedDate).length === 0}
+                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="h-5 w-5" />
+                {getAvailableRoomsForDate(selectedDate).length === 0 ? 'No Rooms Available' : 'Create Booking'}
+              </button>
             </div>
           </div>
         </div>
@@ -415,13 +436,11 @@ export function Calendar() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 >
                   <option value="">Select a room</option>
-                  {rooms
-                    .filter(room => !getBookingsForDate(selectedDate!).some(b => b.room_id === room.id))
-                    .map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.name} - {formatCurrency(room.price, company?.currency)}
-                      </option>
-                    ))}
+                  {getAvailableRoomsForDate(selectedDate).map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.name} - {formatCurrency(room.price, company?.currency)}
+                    </option>
+                  ))}
                 </select>
               </div>
 
