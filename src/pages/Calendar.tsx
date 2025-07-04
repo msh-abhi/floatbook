@@ -230,8 +230,8 @@ export function Calendar() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Calendar</h1>
-          <p className="text-gray-600">View and manage your bookings by date.</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Calendar</h1>
+          <p className="text-slate-600">View and manage your bookings by date.</p>
         </div>
       </div>
 
@@ -240,19 +240,19 @@ export function Calendar() {
         {/* Calendar Header */}
         <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-slate-900">
               {formatMonthYear(currentMonth)}
             </h2>
             <div className="flex gap-2">
               <button
                 onClick={() => navigateMonth('prev')}
-                className="p-3 text-gray-500 hover:text-gray-700 hover:bg-white rounded-lg transition-all shadow-sm"
+                className="p-3 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition-all shadow-sm"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={() => navigateMonth('next')}
-                className="p-3 text-gray-500 hover:text-gray-700 hover:bg-white rounded-lg transition-all shadow-sm"
+                className="p-3 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition-all shadow-sm"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -264,7 +264,7 @@ export function Calendar() {
         <div className="p-6">
           <div className="grid grid-cols-7 gap-2 mb-4">
             {weekDays.map(day => (
-              <div key={day} className="text-center text-sm font-semibold text-gray-600 py-3 bg-gray-50 rounded-lg">
+              <div key={day} className="text-center text-sm font-semibold text-slate-600 py-3 bg-gray-50 rounded-lg">
                 {day}
               </div>
             ))}
@@ -281,12 +281,12 @@ export function Calendar() {
                   onClick={() => handleDateClick(day.fullDate, day.isCurrentMonth)}
                   className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
                     day.isCurrentMonth
-                      ? 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                      ? 'bg-white border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
                       : 'bg-gray-50 border-gray-100 text-gray-400'
-                  } ${isToday(day.fullDate) ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100' : ''}`}
+                  } ${isToday(day.fullDate) ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-100' : ''}`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`text-lg font-semibold ${isToday(day.fullDate) ? 'text-blue-700' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <span className={`text-lg font-semibold ${isToday(day.fullDate) ? 'text-emerald-700' : day.isCurrentMonth ? 'text-slate-900' : 'text-gray-400'}`}>
                       {day.date}
                     </span>
                     {day.isCurrentMonth && availableRooms > 0 && (
@@ -304,7 +304,7 @@ export function Calendar() {
                         </div>
                       ))}
                       {dayBookings.length > 2 && (
-                        <div className="text-xs text-gray-500 font-medium">
+                        <div className="text-xs text-slate-500 font-medium">
                           +{dayBookings.length - 2} more
                         </div>
                       )}
@@ -319,16 +319,16 @@ export function Calendar() {
 
       {/* Date Details Modal */}
       {showDateModal && selectedDate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-gray-900">
+                <h3 className="text-xl font-semibold text-slate-900">
                   {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </h3>
                 <button
                   onClick={() => setShowDateModal(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -339,12 +339,12 @@ export function Calendar() {
               {getBookingsForDate(selectedDate).length === 0 ? (
                 <div className="text-center py-8">
                   <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">No bookings for this date</h4>
-                  <p className="text-gray-600 mb-6">Would you like to create a new booking?</p>
+                  <h4 className="text-lg font-medium text-slate-900 mb-2">No bookings for this date</h4>
+                  <p className="text-slate-600 mb-6">Would you like to create a new booking?</p>
                   <button
                     onClick={handleCreateBooking}
                     disabled={rooms.length === 0}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
+                    className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
                   >
                     <Plus className="h-5 w-5" />
                     Create Booking
@@ -353,13 +353,13 @@ export function Calendar() {
               ) : (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-medium text-gray-900">
+                    <h4 className="text-lg font-medium text-slate-900">
                       {getBookingsForDate(selectedDate).length} Booking{getBookingsForDate(selectedDate).length !== 1 ? 's' : ''}
                     </h4>
                     <button
                       onClick={handleCreateBooking}
                       disabled={rooms.length === 0}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Plus className="h-4 w-4" />
                       Add Booking
@@ -370,12 +370,12 @@ export function Calendar() {
                     {getBookingsForDate(selectedDate).map((booking) => (
                       <div key={booking.id} className={`flex items-center justify-between p-4 rounded-lg border ${getBookingColorClass(booking)}`}>
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900">{booking.customer_name}</p>
-                          <p className="text-sm text-gray-600">{booking.room?.name}</p>
-                          {booking.customer_email && <p className="text-sm text-gray-500">{booking.customer_email}</p>}
+                          <p className="font-semibold text-slate-900">{booking.customer_name}</p>
+                          <p className="text-sm text-slate-600">{booking.room?.name}</p>
+                          {booking.customer_email && <p className="text-sm text-slate-500">{booking.customer_email}</p>}
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-gray-900">
+                          <p className="font-bold text-slate-900">
                             {formatCurrency(Number(booking.total_amount), company?.currency)}
                           </p>
                           <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${booking.is_paid ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}`}>
@@ -394,17 +394,17 @@ export function Calendar() {
 
       {/* Booking Creation Modal */}
       {showBookingModal && selectedDate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-slate-900">
                 Create Booking for {new Date(selectedDate + 'T00:00:00').toLocaleDateString()}
               </h2>
             </div>
 
             <form onSubmit={handleSubmitBooking} className="p-6 space-y-4">
               <div>
-                <label htmlFor="room_id" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="room_id" className="block text-sm font-medium text-slate-700 mb-1">
                   Room *
                 </label>
                 <select
@@ -412,7 +412,7 @@ export function Calendar() {
                   value={formData.room_id}
                   onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 >
                   <option value="">Select a room</option>
                   {rooms
@@ -426,7 +426,7 @@ export function Calendar() {
               </div>
 
               <div>
-                <label htmlFor="customer_name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="customer_name" className="block text-sm font-medium text-slate-700 mb-1">
                   Customer Name *
                 </label>
                 <input
@@ -435,13 +435,13 @@ export function Calendar() {
                   value={formData.customer_name}
                   onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="Enter customer name"
                 />
               </div>
 
               <div>
-                <label htmlFor="customer_email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="customer_email" className="block text-sm font-medium text-slate-700 mb-1">
                   Customer Email
                 </label>
                 <input
@@ -449,13 +449,13 @@ export function Calendar() {
                   type="email"
                   value={formData.customer_email}
                   onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="customer@email.com"
                 />
               </div>
 
               <div>
-                <label htmlFor="referred_by" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="referred_by" className="block text-sm font-medium text-slate-700 mb-1">
                   Referred By
                 </label>
                 <input
@@ -463,13 +463,13 @@ export function Calendar() {
                   type="text"
                   value={formData.referred_by}
                   onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="Who referred this customer?"
                 />
               </div>
 
               <div>
-                <label htmlFor="total_amount" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="total_amount" className="block text-sm font-medium text-slate-700 mb-1">
                   Total Price ({company?.currency}) *
                 </label>
                 <input
@@ -480,13 +480,13 @@ export function Calendar() {
                   value={formData.total_amount}
                   onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="0.00"
                 />
               </div>
 
               <div>
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="notes" className="block text-sm font-medium text-slate-700 mb-1">
                   Notes
                 </label>
                 <textarea
@@ -494,7 +494,7 @@ export function Calendar() {
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={2}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="Any additional notes..."
                 />
               </div>
@@ -506,13 +506,13 @@ export function Calendar() {
                     setShowBookingModal(false);
                     setSelectedDate(null);
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   Create Booking
                 </button>

@@ -50,7 +50,7 @@ export function Layout() {
         />
       );
     }
-    return <Building2 className="h-8 w-8 text-blue-600 flex-shrink-0" />;
+    return <Building2 className="h-8 w-8 text-emerald-600 flex-shrink-0" />;
   };
 
   return (
@@ -60,12 +60,12 @@ export function Layout() {
         <div className="flex items-center gap-3 overflow-hidden">
           <CompanyLogo />
           <div className="overflow-hidden">
-            <h1 className="text-xl font-bold text-gray-900 truncate">{company?.name || 'FloatBook'}</h1>
+            <h1 className="text-xl font-bold text-slate-900 truncate">{company?.name || 'FloatBook'}</h1>
           </div>
         </div>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
+          className="p-2 rounded-md text-slate-600 hover:bg-gray-100"
         >
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -84,8 +84,8 @@ export function Layout() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive(item.href)
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'text-slate-700 hover:bg-gray-100'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -95,7 +95,7 @@ export function Layout() {
             })}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 w-full text-left"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-gray-100 w-full text-left"
             >
               <LogOut className="h-5 w-5" />
               Sign Out
@@ -112,8 +112,8 @@ export function Layout() {
             <div className="flex items-center gap-3 px-6 py-6 border-b">
               <CompanyLogo />
               <div className="overflow-hidden">
-                <h1 className="text-xl font-bold text-gray-900 truncate">{company?.name}</h1>
-                <p className="text-sm text-gray-400">by FloatBook</p>
+                <h1 className="text-xl font-bold text-slate-900 truncate">{company?.name}</h1>
+                <p className="text-sm text-slate-400">by FloatBook</p>
               </div>
             </div>
 
@@ -126,10 +126,10 @@ export function Layout() {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                         isActive(item.href)
-                          ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 shadow-sm'
+                          : 'text-slate-700 hover:bg-gray-50 hover:text-slate-900'
                       }`}
                     >
                       <Icon className="h-5 w-5" />
@@ -144,7 +144,7 @@ export function Layout() {
                 <Link
                   to="/settings"
                   state={{ tab: 'plans' }}
-                  className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity"
                 >
                   <Zap className="h-5 w-5" />
                   UPGRADE
@@ -157,20 +157,20 @@ export function Layout() {
             <div className="border-t px-4 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
                       {user?.email?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-slate-900 truncate">
                       {user?.email}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-gray-100 rounded-md transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
                 </button>

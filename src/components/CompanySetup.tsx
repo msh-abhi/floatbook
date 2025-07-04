@@ -60,15 +60,15 @@ export function CompanySetup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
             <Building2 className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to FloatBook!</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome to FloatBook!</h1>
+          <p className="text-slate-600">
             Let's set up your company to get started
           </p>
         </div>
@@ -76,8 +76,8 @@ export function CompanySetup() {
         {/* Setup Form */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Company Setup</h2>
-            <p className="text-gray-600 text-sm">
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">Company Setup</h2>
+            <p className="text-slate-600 text-sm">
               Create your company profile to start managing rooms and bookings.
             </p>
           </div>
@@ -90,7 +90,7 @@ export function CompanySetup() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="companyName" className="block text-sm font-medium text-slate-700 mb-1">
                 Company Name
               </label>
               <input
@@ -106,7 +106,7 @@ export function CompanySetup() {
 
             {/* New Currency Field */}
             <div>
-              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="currency" className="block text-sm font-medium text-slate-700 mb-1">
                 Default Currency
               </label>
               <select
@@ -120,13 +120,13 @@ export function CompanySetup() {
                 <option value="GBP">GBP (£)</option>
                 <option value="EUR">EUR (€)</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">This will be the currency for all your bookings.</p>
+              <p className="text-xs text-slate-500 mt-1">This will be the currency for all your bookings.</p>
             </div>
 
             <button
               type="submit"
               disabled={loading || !companyName.trim()}
-              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-3 px-4 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -142,9 +142,9 @@ export function CompanySetup() {
             </button>
           </form>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">What's next?</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
+          <div className="mt-6 p-4 bg-emerald-50 rounded-lg">
+            <h3 className="text-sm font-medium text-slate-900 mb-2">What's next?</h3>
+            <ul className="text-sm text-slate-600 space-y-1">
               <li>• Add rooms to your inventory</li>
               <li>• Start accepting bookings</li>
               <li>• Track your revenue and analytics</li>

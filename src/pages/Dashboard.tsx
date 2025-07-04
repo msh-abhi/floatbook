@@ -151,22 +151,22 @@ export function Dashboard() {
       title: 'Total Bookings',
       value: stats.totalBookings.toString(),
       icon: Calendar,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
     },
     {
       title: "Today's Bookings",
       value: stats.todayBookings.toString(),
       icon: Clock,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
     },
     {
       title: 'Occupancy Rate',
       value: `${stats.occupancyRate.toFixed(1)}%`,
       icon: TrendingUp,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
     },
   ];
 
@@ -175,16 +175,16 @@ export function Dashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
             Welcome back{company ? `, ${company.name}` : ''}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-slate-600">
             Here's what's happening with your bookings today.
           </p>
         </div>
         <button
           onClick={() => navigate('/bookings')}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 self-start"
+          className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 self-start"
         >
           <Plus className="h-5 w-5" />
           New Booking
@@ -199,8 +199,8 @@ export function Dashboard() {
             <div key={stat.title} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">{stat.title}</p>
+                  <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
                 </div>
                 <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
                   <Icon className="h-6 w-6" />
@@ -220,8 +220,8 @@ export function Dashboard() {
               onClick={() => setActiveTab('today')}
               className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'today'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-emerald-500 text-emerald-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -233,8 +233,8 @@ export function Dashboard() {
               onClick={() => setActiveTab('upcoming')}
               className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'upcoming'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-emerald-500 text-emerald-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -251,7 +251,7 @@ export function Dashboard() {
             todayBookings.length === 0 ? (
               <div className="text-center py-8">
                 <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No bookings for today</p>
+                <p className="text-slate-500">No bookings for today</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -259,19 +259,19 @@ export function Dashboard() {
                   <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <p className="font-medium text-gray-900">{booking.customer_name}</p>
-                        <span className="text-sm text-gray-500">•</span>
-                        <p className="text-sm text-gray-600">{booking.room?.name}</p>
+                        <p className="font-medium text-slate-900">{booking.customer_name}</p>
+                        <span className="text-sm text-slate-500">•</span>
+                        <p className="text-sm text-slate-600">{booking.room?.name}</p>
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-slate-500">
                         {formatDateRange(booking.check_in_date, booking.check_out_date)}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount), company?.currency)}</p>
+                        <p className="font-semibold text-slate-900">{formatCurrency(Number(booking.total_amount), company?.currency)}</p>
                         {booking.advance_paid > 0 && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-slate-500">
                             Advance: {formatCurrency(Number(booking.advance_paid), company?.currency)}
                           </p>
                         )}
@@ -305,7 +305,7 @@ export function Dashboard() {
             upcomingBookings.length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No upcoming bookings</p>
+                <p className="text-slate-500">No upcoming bookings</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -313,19 +313,19 @@ export function Dashboard() {
                   <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <p className="font-medium text-gray-900">{booking.customer_name}</p>
-                        <span className="text-sm text-gray-500">•</span>
-                        <p className="text-sm text-gray-600">{booking.room?.name}</p>
+                        <p className="font-medium text-slate-900">{booking.customer_name}</p>
+                        <span className="text-sm text-slate-500">•</span>
+                        <p className="text-sm text-slate-600">{booking.room?.name}</p>
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-slate-500">
                         {formatDateRange(booking.check_in_date, booking.check_out_date)}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900">{formatCurrency(Number(booking.total_amount), company?.currency)}</p>
+                        <p className="font-semibold text-slate-900">{formatCurrency(Number(booking.total_amount), company?.currency)}</p>
                         {booking.advance_paid > 0 && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-slate-500">
                             Advance: {formatCurrency(Number(booking.advance_paid), company?.currency)}
                           </p>
                         )}
