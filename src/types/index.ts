@@ -14,6 +14,16 @@ export interface User {
   email: string;
 }
 
+export interface Profile {
+  id: string;
+  user_id: string;
+  role: 'member' | 'manager' | 'company_admin' | 'super_admin';
+  full_name?: string;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CompanyUser {
   id: string;
   company_id: string;
@@ -22,6 +32,18 @@ export interface CompanyUser {
   created_at: string;
   user_email?: string;
   user?: User;
+  profile?: Profile;
+}
+
+export interface Subscription {
+  id: string;
+  company_id: string;
+  plan_name: 'free' | 'basic' | 'pro';
+  status: 'active' | 'paused' | 'canceled' | 'expired';
+  started_at: string;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Room {
@@ -59,7 +81,7 @@ export interface Booking {
   final_total_amount?: number;
 }
 
-// New Report Types
+// Report Types
 export interface ReportDailyStat {
   report_date: string;
   total_bookings: number;
@@ -93,4 +115,20 @@ export interface ReportOccupancy {
 export interface BookingFilters {
   query: string;
   paymentStatus: 'all' | 'paid' | 'unpaid';
+}
+
+// Super Admin Types
+export interface CompanyWithStats extends Company {
+  total_bookings: number;
+  total_revenue: number;
+  user_count: number;
+  subscription?: Subscription;
+}
+
+export interface PlatformStats {
+  total_companies: number;
+  total_users: number;
+  total_bookings: number;
+  total_revenue: number;
+  active_subscriptions: number;
 }

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthForm } from './components/AuthForm';
 import { CompanySetup } from './components/CompanySetup';
 import { Layout } from './components/Layout';
+import { SuperAdminLayout } from './components/SuperAdminLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Rooms } from './pages/Rooms';
 import { useAuth } from './hooks/useAuth';
@@ -13,8 +14,14 @@ const Calendar = React.lazy(() => import('./pages/Calendar').then(module => ({ d
 const Settings = React.lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
 const Reports = React.lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
 
+// Super Admin Pages
+const SuperAdminDashboard = React.lazy(() => import('./pages/SuperAdminDashboard').then(module => ({ default: module.SuperAdminDashboard })));
+const SuperAdminCompanies = React.lazy(() => import('./pages/SuperAdminCompanies').then(module => ({ default: module.SuperAdminCompanies })));
+const SuperAdminSubscriptions = React.lazy(() => import('./pages/SuperAdminSubscriptions').then(module => ({ default: module.SuperAdminSubscriptions })));
+const SuperAdminBookings = React.lazy(() => import('./pages/SuperAdminBookings').then(module => ({ default: module.SuperAdminBookings })));
+
 function App() {
-  const { user, loading, companyId } = useAuth();
+  const { user, loading, companyId, isSuperAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -31,6 +38,41 @@ function App() {
     return <AuthForm />;
   }
 
+  // Super Admin gets their own interface
+  if (isSuperAdmin) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/auth" element={<Navigate to="/admin" replace />} />
+          <Route path="/" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin" element={<SuperAdminLayout />}>
+            <Route index element={
+              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+                <SuperAdminDashboard />
+              </React.Suspense>
+            } />
+            <Route path="companies" element={
+              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+                <SuperAdminCompanies />
+              </React.Suspense>
+            } />
+            <Route path="subscriptions" element={
+              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+                <SuperAdminSubscriptions />
+              </React.Suspense>
+            } />
+            <Route path="bookings" element={
+              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+                <SuperAdminBookings />
+              </React.Suspense>
+            } />
+          </Route>
+        </Routes>
+      </Router>
+    );
+  }
+
+  // Regular users need a company
   if (!companyId) {
     return <CompanySetup />;
   }
@@ -39,6 +81,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/auth" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
