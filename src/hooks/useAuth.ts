@@ -10,117 +10,94 @@ export function useAuth() {
   const [companyId, setCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    const session = supabase.auth.getSession();
+    
+    const handleAuthChange = async (event: string, session: any) => {
+      setLoading(true);
+      const currentUser = session?.user;
+      setUser(currentUser ?? null);
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
+      if (currentUser) {
+        // Fetch profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .single();
+        
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error("Error fetching user profile:", profileError);
+        }
+        setProfile(profileData);
+        
+        // Fetch company
+        const { data: companyData, error: companyError } = await supabase
+          .from('company_users')
+          .select('company_id')
+          .eq('user_id', currentUser.id);
+
+        if (companyError) {
+          console.error('Error fetching user company:', companyError);
+        } else if (companyData && companyData.length > 0) {
+          setCompanyId(companyData[0].company_id);
+        } else {
+          setCompanyId(null);
+        }
       } else {
         setProfile(null);
         setCompanyId(null);
-        setLoading(false);
       }
-    });
+      setLoading(false);
+    };
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+    
+    // Initial load
+    session.then(({ data }) => handleAuthChange("INITIAL_SESSION", data.session));
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      // Fetch user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        // Create profile if it doesn't exist
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert([{ user_id: userId, role: 'member' }])
-          .select()
-          .single();
-        
-        if (createError) {
-          console.error('Error creating profile:', createError);
-        } else {
-          setProfile(newProfile);
-        }
-      } else {
-        setProfile(profileData);
-      }
-
-      // Fetch user's company if not super admin
-      if (profileData?.role !== 'super_admin') {
-        const { data: companyUserData, error: companyError } = await supabase
-          .from('company_users')
-          .select('company_id')
-          .eq('user_id', userId);
-
-        if (companyError) {
-          console.error('Error fetching user company:', companyError);
-        } else if (companyUserData && companyUserData.length > 0) {
-          setCompanyId(companyUserData[0].company_id);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    return { error };
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return { error };
+
+    // *** THIS IS THE FIX ***
+    // Create a profile for the new user immediately after sign-up
+    if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({ user_id: data.user.id, role: 'member' });
+        
+        if (profileError) {
+            console.error("Error creating profile:", profileError);
+            // This is a critical error, you might want to handle it more gracefully
+            return { error: profileError };
+        }
+    }
+    return { error: null };
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
   };
-
-  const updateUserRole = async (userId: string, role: Profile['role']) => {
-    if (!profile || profile.role !== 'super_admin') {
-      throw new Error('Unauthorized');
+  
+  const refreshCompany = async () => {
+    if(user) {
+        const { data: companyData } = await supabase.from('company_users').select('company_id').eq('user_id', user.id);
+        if (companyData && companyData.length > 0) {
+            setCompanyId(companyData[0].company_id);
+        } else {
+            setCompanyId(null);
+        }
     }
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role })
-      .eq('user_id', userId);
-
-    return { error };
-  };
-
-  // Role checking helpers
-  const isSuperAdmin = profile?.role === 'super_admin';
-  const isCompanyAdmin = profile?.role === 'company_admin';
-  const isManager = profile?.role === 'manager';
-  const isMember = profile?.role === 'member';
+  }
 
   return {
     user,
@@ -130,19 +107,7 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
-    updateUserRole,
-    refreshProfile: () => user && fetchUserProfile(user.id),
-    refreshCompany: () => user && fetchUserProfile(user.id),
-    // Role flags
-    isSuperAdmin,
-    isCompanyAdmin,
-    isManager,
-    isMember,
-    // Permission helpers
-    canManageCompany: isSuperAdmin || isCompanyAdmin,
-    canCreateBookings: isSuperAdmin || isCompanyAdmin || isManager,
-    canEditBookings: isSuperAdmin || isCompanyAdmin,
-    canManageRooms: isSuperAdmin || isCompanyAdmin,
-    canManageTeam: isSuperAdmin || isCompanyAdmin,
+    refreshCompany,
+    isSuperAdmin: profile?.role === 'super_admin',
   };
 }
