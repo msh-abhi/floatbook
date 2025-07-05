@@ -22,21 +22,21 @@ export function useAuth() {
           .select('*')
           .eq('user_id', currentUser.id)
           .single();
-
+        
         if (profileError && profileError.code !== 'PGRST116') {
           console.error("Error fetching user profile:", profileError);
           setProfile(null);
         } else {
           setProfile(profileData);
         }
-
+        
         // Fetch user's company if they are not a super admin
         if (profileData?.role !== 'super_admin') {
             const { data: companyData } = await supabase
               .from('company_users')
               .select('company_id')
               .eq('user_id', currentUser.id)
-              .maybeSingle(); // Use maybeSingle to handle cases where there is no company yet
+              .maybeSingle();
             setCompanyId(companyData?.company_id || null);
         }
       } else {
@@ -67,7 +67,6 @@ export function useAuth() {
     if (error) return { error };
 
     // Create a profile for the new user immediately after sign-up.
-    // This is now safe because the new RLS policy allows it.
     if (data.user) {
         const { error: profileError } = await supabase
           .from('profiles')
