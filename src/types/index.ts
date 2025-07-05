@@ -2,6 +2,10 @@ export interface Company {
   id: string;
   name: string;
   logo_url?: string;
+  address?: string;
+  currency?: string;
+  tax_enabled?: boolean;
+  tax_rate?: number;
   created_at: string;
 }
 
@@ -26,6 +30,8 @@ export interface Room {
   name: string;
   price: number;
   capacity: number;
+  amenities?: string[];
+  meal_options?: string;
   created_at: string;
 }
 
@@ -45,11 +51,12 @@ export interface Booking {
   advance_paid: number;
   referred_by?: string;
   notes?: string;
-  guest_count: number; // Add this
-  booking_type: string; // Add this
+  guest_count: number;
+  booking_type: string;
   created_at: string;
   room?: Room;
-  notes?: string; 
+  tax_amount?: number;
+  final_total_amount?: number;
 }
 
 // New Report Types
@@ -83,25 +90,7 @@ export interface ReportOccupancy {
   occupancy_rate: number;
 } 
 
-export interface Company {
-  id: string;
-  name: string;
-  logo_url?: string;
-  address?: string;
-  created_at: string;
-}
-
-export interface Company {
-  id: string;
-  name: string;
-  logo_url?: string;
-  address?: string;
-  currency?: string; // Add this line
-  created_at: string;
-}
-
-
-  export interface BookingFilters {
+export interface BookingFilters {
   query: string;
   paymentStatus: 'all' | 'paid' | 'unpaid';
 }

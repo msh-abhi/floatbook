@@ -139,19 +139,18 @@ export function Layout() {
                 })}
               </nav>
 
-              {/* Upgrade Button */}
+              {/* Upgrade Button - Smaller */}
               <div className="px-6 mb-6">
                 <Link
                   to="/settings"
                   state={{ tab: 'plans' }}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white flex items-center justify-center gap-2 py-2 px-3 rounded-lg font-medium hover:opacity-90 transition-opacity text-sm"
                 >
-                  <Zap className="h-5 w-5" />
+                  <Zap className="h-4 w-4" />
                   UPGRADE
                 </Link>
               </div>
             </div>
-
 
             {/* User section */}
             <div className="border-t px-4 py-4">
@@ -180,10 +179,33 @@ export function Layout() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 lg:pl-64">
+        <div className="flex-1 lg:pl-64 pb-16 lg:pb-0">
           <main className="min-h-screen bg-gray-50">
             <Outlet />
           </main>
+        </div>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t z-50">
+        <div className="flex justify-around items-center py-2 px-4">
+          {navigation.slice(0, 3).map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors min-h-[44px] justify-center ${
+                  isActive(item.href)
+                    ? 'text-emerald-700 bg-emerald-50'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-xs font-medium">{item.name}</span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

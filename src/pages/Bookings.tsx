@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { CreditCard, Plus, Edit, Trash2, Calendar, Mail, Phone, CheckCircle, Clock, Percent, UserCheck, CircleDollarSign, Users, Ship, Search } from 'lucide-react';
+import { CreditCard, Plus, Edit, Trash2, Calendar, Mail, Phone, CheckCircle, Clock, Percent, UserCheck, CircleDollarSign, Users, Ship, Search, Eye } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
 import { Booking, Room, BookingFilters } from '../types';
 import { formatCurrency } from '../utils/currency';
+import { BookingDetailModal } from '../components/BookingDetailModal';
 
 export function Bookings() {
   const { companyId } = useAuth();
@@ -13,6 +14,8 @@ export function Bookings() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   const initialFormData = {
@@ -57,18 +60,28 @@ export function Bookings() {
     }
   };
 
-  const calculateDueAmount = () => {
-    const total = parseFloat(formData.total_amount) || 0;
+  const calculateTaxAndTotal = () => {
+    const baseAmount = parseFloat(formData.total_amount) || 0;
     const discountValue = parseFloat(formData.discount_value) || 0;
     const advancePaid = parseFloat(formData.advance_paid) || 0;
-    const discount = formData.discount_type === 'percentage' ? (total * discountValue) / 100 : discountValue;
-    return Math.max(0, total - discount - advancePaid);
+    
+    const discountAmount = formData.discount_type === 'percentage' 
+      ? (baseAmount * discountValue) / 100 
+      : discountValue;
+    
+    const discountedAmount = baseAmount - discountAmount;
+    const taxAmount = company?.tax_enabled ? (discountedAmount * (company.tax_rate || 0)) / 100 : 0;
+    const finalTotal = discountedAmount + taxAmount;
+    const dueAmount = Math.max(0, finalTotal - advancePaid);
+
+    return { discountAmount, taxAmount, finalTotal, dueAmount };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyId) return;
     try {
+      const { finalTotal } = calculateTaxAndTotal();
       const bookingData = {
         company_id: companyId, room_id: formData.room_id, check_in_date: formData.check_in_date,
         check_out_date: formData.check_out_date, customer_name: formData.customer_name,
@@ -77,7 +90,7 @@ export function Bookings() {
         discount_value: parseFloat(formData.discount_value), advance_paid: parseFloat(formData.advance_paid),
         referred_by: formData.referred_by || null, notes: formData.notes || null,
         guest_count: parseInt(formData.guest_count), booking_type: formData.booking_type,
-        is_paid: calculateDueAmount() <= 0,
+        is_paid: finalTotal <= parseFloat(formData.advance_paid),
       };
 
       if (editingBooking) {
@@ -122,6 +135,11 @@ export function Bookings() {
     }
   };
 
+  const handleViewDetails = (bookingId: string) => {
+    setSelectedBookingId(bookingId);
+    setShowDetailModal(true);
+  };
+
   const togglePaymentStatus = async (booking: Booking) => {
     await supabase.from('bookings').update({ is_paid: !booking.is_paid }).eq('id', booking.id);
     fetchData();
@@ -154,12 +172,12 @@ export function Bookings() {
 
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Bookings</h1>
           <p className="text-slate-600">Manage your room bookings and customer information.</p>
         </div>
-        <button onClick={openModal} className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 shadow-lg flex items-center gap-2">
+        <button onClick={openModal} className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 shadow-lg flex items-center gap-2 self-start">
           <Plus className="h-5 w-5" /> New Booking
         </button>
       </div>
@@ -213,6 +231,9 @@ export function Bookings() {
                   <button onClick={() => togglePaymentStatus(booking)} className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${booking.is_paid ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}`}>
                     {booking.is_paid ? <><CheckCircle className="h-3 w-3"/>Paid</> : <><Clock className="h-3 w-3"/>Pending</>}
                   </button>
+                  <button onClick={() => handleViewDetails(booking.id)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View Details">
+                    <Eye className="h-4 w-4" />
+                  </button>
                   <button onClick={() => handleEdit(booking)} className="p-2 text-slate-400 hover:text-emerald-600"><Edit className="h-4 w-4" /></button>
                   <button onClick={() => handleDelete(booking.id)} className="p-2 text-slate-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
                 </div>
@@ -262,7 +283,7 @@ export function Bookings() {
                     <div className="flex rounded-lg bg-gray-100 p-1"><button type="button" onClick={() => setFormData({...formData, booking_type: 'individual'})} className={`flex-1 py-2 px-4 text-sm rounded-md flex items-center justify-center gap-2 ${formData.booking_type === 'individual' ? 'bg-white shadow' : ''}`}><Users className="h-4 w-4"/> Individual</button><button type="button" onClick={() => setFormData({...formData, booking_type: 'full_boat'})} className={`flex-1 py-2 px-4 text-sm rounded-md flex items-center justify-center gap-2 ${formData.booking_type === 'full_boat' ? 'bg-white shadow' : ''}`}><Ship className="h-4 w-4"/> Full Boat</button></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label htmlFor="total_amount" className="block text-sm font-medium text-slate-700 mb-1">Total Price</label><input id="total_amount" type="number" step="0.01" min="0" value={formData.total_amount} onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-emerald-500"/></div>
+                    <div><label htmlFor="total_amount" className="block text-sm font-medium text-slate-700 mb-1">Base Price</label><input id="total_amount" type="number" step="0.01" min="0" value={formData.total_amount} onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })} required className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-emerald-500"/></div>
                     <div><label htmlFor="advance_paid" className="block text-sm font-medium text-slate-700 mb-1">Advance Paid</label><input id="advance_paid" type="number" step="0.01" min="0" value={formData.advance_paid} onChange={(e) => setFormData({ ...formData, advance_paid: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"/></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -272,13 +293,62 @@ export function Bookings() {
                       </div>
                       <div><label htmlFor="referred_by" className="block text-sm font-medium text-slate-700 mb-1">Referred By</label><input id="referred_by" type="text" value={formData.referred_by} onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="e.g. John Doe"/></div>
                   </div>
-                  <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100"><div className="flex justify-between items-center"><span className="text-slate-600 font-medium">TOTAL DUE:</span><span className="text-2xl font-bold text-emerald-700">{formatCurrency(calculateDueAmount(), company?.currency)}</span></div></div>
+                  
+                  {/* Enhanced Financial Summary */}
+                  <div className="p-4 bg-gradient-to-r from-emerald-50 to-stone-50 rounded-lg border border-emerald-100">
+                    <h4 className="font-semibold text-slate-900 mb-3">Booking Summary</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Base Amount:</span>
+                        <span className="font-medium">{formatCurrency(parseFloat(formData.total_amount) || 0, company?.currency)}</span>
+                      </div>
+                      {parseFloat(formData.discount_value) > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Discount ({formData.discount_type === 'percentage' ? `${formData.discount_value}%` : 'Fixed'}):</span>
+                          <span className="font-medium text-red-600">-{formatCurrency(calculateTaxAndTotal().discountAmount, company?.currency)}</span>
+                        </div>
+                      )}
+                      {company?.tax_enabled && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Tax ({company.tax_rate}%):</span>
+                          <span className="font-medium text-slate-900">+{formatCurrency(calculateTaxAndTotal().taxAmount, company?.currency)}</span>
+                        </div>
+                      )}
+                      <hr className="border-gray-200" />
+                      <div className="flex justify-between">
+                        <span className="text-slate-600 font-medium">Total Amount:</span>
+                        <span className="text-lg font-bold text-emerald-700">{formatCurrency(calculateTaxAndTotal().finalTotal, company?.currency)}</span>
+                      </div>
+                      {parseFloat(formData.advance_paid) > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Advance Paid:</span>
+                          <span className="font-medium text-emerald-600">{formatCurrency(parseFloat(formData.advance_paid), company?.currency)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-slate-600 font-medium">Amount Due:</span>
+                        <span className="text-lg font-bold text-orange-600">{formatCurrency(calculateTaxAndTotal().dueAmount, company?.currency)}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3 pt-6 mt-6 border-t border-gray-100"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 border rounded-lg">Cancel</button><button type="submit" className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg">{editingBooking ? 'Update Booking' : 'Create Booking'}</button></div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Booking Detail Modal */}
+      {showDetailModal && selectedBookingId && companyId && (
+        <BookingDetailModal
+          bookingId={selectedBookingId}
+          companyId={companyId}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedBookingId(null);
+          }}
+        />
       )}
     </div>
   );

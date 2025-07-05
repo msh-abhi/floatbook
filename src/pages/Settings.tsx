@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Users, LogOut, Mail, Trash2, UserPlus, Settings as SettingsIcon, CreditCard, Crown, MapPin, Key, Zap } from 'lucide-react';
+import { Building2, Users, LogOut, Mail, Trash2, UserPlus, Settings as SettingsIcon, CreditCard, Crown, MapPin, Key, Zap, Calculator } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { useCompany } from '../hooks/useCompany';
@@ -15,13 +15,15 @@ export function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'company' | 'team' | 'email' | 'payment' | 'plans'>('company');
+  const [activeTab, setActiveTab] = useState<'company' | 'team' | 'email' | 'payment' | 'plans' | 'tax'>('company');
   
   const [companyForm, setCompanyForm] = useState({
     name: '',
     logo_url: '',
     address: '',
     currency: 'USD',
+    tax_enabled: false,
+    tax_rate: 0,
   });
 
   const [emailSettings, setEmailSettings] = useState({
@@ -43,6 +45,8 @@ export function Settings() {
         logo_url: company.logo_url || '',
         address: company.address || '',
         currency: company.currency || 'USD',
+        tax_enabled: company.tax_enabled || false,
+        tax_rate: company.tax_rate || 0,
       });
     }
   }, [company]);
@@ -86,6 +90,8 @@ export function Settings() {
         logo_url: companyForm.logo_url || null,
         address: companyForm.address || null,
         currency: companyForm.currency,
+        tax_enabled: companyForm.tax_enabled,
+        tax_rate: companyForm.tax_rate,
       });
 
       if (error) {
@@ -126,6 +132,7 @@ export function Settings() {
   const tabs = [
     { id: 'company', name: 'Company Info', icon: Building2 },
     { id: 'team', name: 'Team Members', icon: Users },
+    { id: 'tax', name: 'Tax Settings', icon: Calculator },
     { id: 'email', name: 'Email Settings', icon: Mail },
     { id: 'payment', name: 'Payment Methods', icon: CreditCard },
     { id: 'plans', name: 'Subscription Plans', icon: Crown },
@@ -275,6 +282,72 @@ export function Settings() {
                       className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
                       {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'tax' && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <Calculator className="h-5 w-5 text-emerald-600" />
+                  Tax Settings
+                </h2>
+              </div>
+              <div className="p-6">
+                <form onSubmit={handleUpdateCompany} className="space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-stone-50 rounded-lg">
+                    <div>
+                      <h3 className="text-sm font-medium text-slate-900">Enable Tax</h3>
+                      <p className="text-sm text-slate-600">Automatically apply tax to all bookings</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={companyForm.tax_enabled}
+                        onChange={(e) => setCompanyForm({ ...companyForm, tax_enabled: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                  </div>
+
+                  {companyForm.tax_enabled && (
+                    <div>
+                      <label htmlFor="tax_rate" className="block text-sm font-medium text-slate-700 mb-2">
+                        Tax Rate (%)
+                      </label>
+                      <input
+                        id="tax_rate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={companyForm.tax_rate}
+                        onChange={(e) => setCompanyForm({ ...companyForm, tax_rate: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                        placeholder="0.00"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">Enter the tax percentage to be applied to all bookings.</p>
+                    </div>
+                  )}
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Note:</strong> Tax will be calculated on the discounted amount and added to the final total for all new bookings.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg font-medium hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      {saving ? 'Saving...' : 'Save Tax Settings'}
                     </button>
                   </div>
                 </form>

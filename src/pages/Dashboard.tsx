@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, TrendingUp, Clock, Plus, CheckCircle, CircleDollarSign } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Clock, Plus, CheckCircle, CircleDollarSign, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -19,6 +19,7 @@ export function Dashboard() {
   });
   const [todayBookings, setTodayBookings] = useState<(Booking & { room: Room })[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<(Booking & { room: Room })[]>([]);
+  const [chartData, setChartData] = useState<{ date: string; bookings: number; revenue: number }[]>([]);
   const [activeTab, setActiveTab] = useState<'today' | 'upcoming'>('today');
   const [loading, setLoading] = useState(true);
 
@@ -74,6 +75,23 @@ export function Dashboard() {
         booking.check_in_date > today && booking.check_in_date <= nextWeekStr
       ).sort((a, b) => new Date(a.check_in_date).getTime() - new Date(b.check_in_date).getTime()) || [];
 
+      // Generate chart data for last 7 days
+      const chartData = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const dayBookings = bookings?.filter(booking => booking.check_in_date === dateStr) || [];
+        const dayRevenue = dayBookings.reduce((sum, booking) => sum + Number(booking.total_amount), 0);
+        
+        chartData.push({
+          date: dateStr,
+          bookings: dayBookings.length,
+          revenue: dayRevenue,
+        });
+      }
+
       setStats({
         totalRevenue,
         totalBookings,
@@ -83,6 +101,7 @@ export function Dashboard() {
 
       setTodayBookings(todayBookingsData);
       setUpcomingBookings(upcomingBookingsData.slice(0, 5)); // Show next 5
+      setChartData(chartData);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -170,6 +189,8 @@ export function Dashboard() {
     },
   ];
 
+  const maxBookings = Math.max(...chartData.map(d => d.bookings), 1);
+
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -192,23 +213,50 @@ export function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.title} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+            <div key={stat.title} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                  <p className="text-xs lg:text-sm font-medium text-slate-600 mb-1">{stat.title}</p>
+                  <p className="text-lg lg:text-2xl font-bold text-slate-900">{stat.value}</p>
                 </div>
-                <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
-                  <Icon className="h-6 w-6" />
+                <div className={`${stat.bgColor} ${stat.color} p-2 lg:p-3 rounded-lg`}>
+                  <Icon className="h-4 w-4 lg:h-6 lg:w-6" />
                 </div>
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* Analytics Chart */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-emerald-600" />
+            Booking Trends (Last 7 Days)
+          </h2>
+        </div>
+        
+        <div className="h-48 flex items-end gap-2 border-b border-gray-200 pb-4">
+          {chartData.map((data, index) => (
+            <div key={index} className="flex-1 flex flex-col justify-end items-center gap-1 group relative">
+              <div className="absolute -top-8 bg-slate-800 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                {data.bookings} bookings
+              </div>
+              <div 
+                className="w-full bg-emerald-100 hover:bg-emerald-200 rounded-t-lg transition-colors min-h-[4px]" 
+                style={{ height: `${(data.bookings / maxBookings) * 100}%` }}
+              />
+              <span className="text-xs text-slate-500 mt-2">
+                {new Date(data.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Bookings Section */}

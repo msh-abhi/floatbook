@@ -240,36 +240,36 @@ export function Calendar() {
         </div>
       </div>
 
-      {/* Calendar */}
+      {/* Calendar - More Compact */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Calendar Header */}
-        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
+        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-slate-900">
               {formatMonthYear(currentMonth)}
             </h2>
             <div className="flex gap-2">
               <button
                 onClick={() => navigateMonth('prev')}
-                className="p-3 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition-all shadow-sm"
+                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition-all shadow-sm"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => navigateMonth('next')}
-                className="p-3 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition-all shadow-sm"
+                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-white rounded-lg transition-all shadow-sm"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Calendar Grid */}
-        <div className="p-6">
-          <div className="grid grid-cols-7 gap-1 mb-4">
+        <div className="p-4">
+          <div className="grid grid-cols-7 gap-1 mb-2">
             {weekDays.map(day => (
-              <div key={day} className="text-center text-sm font-semibold text-slate-600 py-2 bg-gray-50 rounded-lg">
+              <div key={day} className="text-center text-xs font-semibold text-slate-600 py-2 bg-gray-50 rounded-md">
                 {day}
               </div>
             ))}
@@ -284,18 +284,18 @@ export function Calendar() {
                 <div
                   key={index}
                   onClick={() => handleDateClick(day.fullDate, day.isCurrentMonth)}
-                  className={`h-28 p-2 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                  className={`h-20 p-1.5 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm ${
                     day.isCurrentMonth
                       ? 'bg-white border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
                       : 'bg-gray-50 border-gray-100 text-gray-400'
-                  } ${isToday(day.fullDate) ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-100' : ''}`}
+                  } ${isToday(day.fullDate) ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-100' : ''}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-base font-semibold ${isToday(day.fullDate) ? 'text-emerald-700' : day.isCurrentMonth ? 'text-slate-900' : 'text-gray-400'}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-sm font-semibold ${isToday(day.fullDate) ? 'text-emerald-700' : day.isCurrentMonth ? 'text-slate-900' : 'text-gray-400'}`}>
                       {day.date}
                     </span>
                     {day.isCurrentMonth && availableRooms.length > 0 && (
-                      <span className="text-xs text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full font-medium">
+                      <span className="text-xs text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded-full font-medium">
                         {availableRooms.length}
                       </span>
                     )}
@@ -303,14 +303,14 @@ export function Calendar() {
                   
                   {day.isCurrentMonth && (
                     <div className="space-y-0.5">
-                      {dayBookings.slice(0, 2).map((booking) => (
-                        <div key={booking.id} className={`text-xs p-1.5 rounded-md truncate font-medium border ${getBookingColorClass(booking)}`}>
+                      {dayBookings.slice(0, 1).map((booking) => (
+                        <div key={booking.id} className={`text-xs p-1 rounded-sm truncate font-medium border ${getBookingColorClass(booking)}`}>
                           {booking.customer_name}
                         </div>
                       ))}
-                      {dayBookings.length > 2 && (
-                        <div className="text-xs text-slate-500 font-medium px-1.5">
-                          +{dayBookings.length - 2} more
+                      {dayBookings.length > 1 && (
+                        <div className="text-xs text-slate-500 font-medium px-1">
+                          +{dayBookings.length - 1} more
                         </div>
                       )}
                     </div>
@@ -341,6 +341,43 @@ export function Calendar() {
             </div>
             
             <div className="p-6">
+              {/* Available Rooms - Show First */}
+              {getAvailableRoomsForDate(selectedDate).length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-medium text-slate-900 mb-3 flex items-center gap-2">
+                    <DoorOpen className="h-5 w-5 text-emerald-600" />
+                    Available Rooms ({getAvailableRoomsForDate(selectedDate).length})
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {getAvailableRoomsForDate(selectedDate).map((room) => (
+                      <div key={room.id} className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium text-emerald-800">{room.name}</p>
+                            <p className="text-xs text-emerald-600">Capacity: {room.capacity} {room.capacity === 1 ? 'person' : 'people'}</p>
+                          </div>
+                          <p className="text-sm font-bold text-emerald-700">{formatCurrency(room.price, company?.currency)}</p>
+                        </div>
+                        {room.amenities && room.amenities.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {room.amenities.slice(0, 3).map((amenity, index) => (
+                              <span key={index} className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                {amenity}
+                              </span>
+                            ))}
+                            {room.amenities.length > 3 && (
+                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                +{room.amenities.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Existing Bookings */}
               {getBookingsForDate(selectedDate).length > 0 && (
                 <div className="mb-6">
@@ -366,24 +403,6 @@ export function Calendar() {
                             {booking.is_paid ? 'Paid' : 'Pending'}
                           </span>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Available Rooms */}
-              {getAvailableRoomsForDate(selectedDate).length > 0 && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-medium text-slate-900 mb-3 flex items-center gap-2">
-                    <DoorOpen className="h-5 w-5 text-emerald-600" />
-                    Available Rooms ({getAvailableRoomsForDate(selectedDate).length})
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {getAvailableRoomsForDate(selectedDate).map((room) => (
-                      <div key={room.id} className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                        <p className="text-sm font-medium text-emerald-800">{room.name}</p>
-                        <p className="text-xs text-emerald-600">{formatCurrency(room.price, company?.currency)}</p>
                       </div>
                     ))}
                   </div>
