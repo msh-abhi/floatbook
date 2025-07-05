@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthForm } from './components/AuthForm';
@@ -12,9 +14,10 @@ const Bookings = React.lazy(() => import('./pages/Bookings').then(module => ({ d
 const Calendar = React.lazy(() => import('./pages/Calendar').then(module => ({ default: module.Calendar })));
 const Settings = React.lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
 const Reports = React.lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
+const SuperAdmin = React.lazy(() => import('./pages/SuperAdmin').then(module => ({ default: module.SuperAdmin }))); // Lazy load SuperAdmin
 
 function App() {
-  const { user, loading, companyId } = useAuth();
+  const { user, loading, companyId, userRole } = useAuth(); // Get userRole
 
   if (loading) {
     return (
@@ -31,7 +34,8 @@ function App() {
     return <AuthForm />;
   }
 
-  if (!companyId) {
+  // If the user is a super_admin, they don't need a companyId to proceed
+  if (!companyId && userRole !== 'super_admin') {
     return <CompanySetup />;
   }
 
@@ -46,7 +50,7 @@ function App() {
           <Route 
             path="bookings" 
             element={
-              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
                 <Bookings />
               </React.Suspense>
             } 
@@ -54,7 +58,7 @@ function App() {
           <Route 
             path="calendar" 
             element={
-              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
                 <Calendar />
               </React.Suspense>
             } 
@@ -62,7 +66,7 @@ function App() {
           <Route
             path="reports"
             element={
-              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
                 <Reports />
               </React.Suspense>
             }
@@ -70,11 +74,22 @@ function App() {
           <Route 
             path="settings" 
             element={
-              <React.Suspense fallback={<div className="p-8"><div className="animate-pulse h-8 bg-gray-200 rounded w-64"></div></div>}>
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
                 <Settings />
               </React.Suspense>
             } 
           />
+          {/* Super Admin Route */}
+          {userRole === 'super_admin' && (
+            <Route
+              path="super-admin"
+              element={
+                <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                  <SuperAdmin />
+                </React.Suspense>
+              }
+            />
+          )}
         </Route>
       </Routes>
     </Router>
