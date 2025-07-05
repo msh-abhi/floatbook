@@ -36,7 +36,7 @@ export function useAuth() {
               .from('company_users')
               .select('company_id')
               .eq('user_id', currentUser.id)
-              .maybeSingle();
+              .maybeSingle(); // Use maybeSingle to handle cases where there is no company yet
             setCompanyId(companyData?.company_id || null);
         }
       } else {
@@ -66,7 +66,7 @@ export function useAuth() {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error };
 
-    // Create a profile for the new user immediately after sign-up.
+    // This is now safe because the new RLS policy allows a user to create their own profile.
     if (data.user) {
         const { error: profileError } = await supabase
           .from('profiles')
