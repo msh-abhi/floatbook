@@ -10,54 +10,53 @@ export function useAuth() {
   const [companyId, setCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
-    const session = supabase.auth.getSession();
-    
     const handleAuthChange = async (event: string, session: any) => {
       setLoading(true);
       const currentUser = session?.user;
       setUser(currentUser ?? null);
 
       if (currentUser) {
-        // Fetch profile
+        // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', currentUser.id)
           .single();
-        
+
         if (profileError && profileError.code !== 'PGRST116') {
           console.error("Error fetching user profile:", profileError);
-        }
-        setProfile(profileData);
-        
-        // Fetch company
-        const { data: companyData, error: companyError } = await supabase
-          .from('company_users')
-          .select('company_id')
-          .eq('user_id', currentUser.id);
-
-        if (companyError) {
-          console.error('Error fetching user company:', companyError);
-        } else if (companyData && companyData.length > 0) {
-          setCompanyId(companyData[0].company_id);
+          setProfile(null);
         } else {
-          setCompanyId(null);
+          setProfile(profileData);
+        }
+
+        // Fetch user's company if they are not a super admin
+        if (profileData?.role !== 'super_admin') {
+            const { data: companyData } = await supabase
+              .from('company_users')
+              .select('company_id')
+              .eq('user_id', currentUser.id)
+              .maybeSingle(); // Use maybeSingle to handle cases where there is no company yet
+            setCompanyId(companyData?.company_id || null);
         }
       } else {
+        // Clear all data on sign out
         setProfile(null);
         setCompanyId(null);
       }
       setLoading(false);
     };
     
+    // Initial session load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleAuthChange("INITIAL_SESSION", session);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
-    
-    // Initial load
-    session.then(({ data }) => handleAuthChange("INITIAL_SESSION", data.session));
 
     return () => subscription.unsubscribe();
   }, []);
-
+  
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
@@ -67,8 +66,8 @@ export function useAuth() {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error };
 
-    // *** THIS IS THE FIX ***
-    // Create a profile for the new user immediately after sign-up
+    // Create a profile for the new user immediately after sign-up.
+    // This is now safe because the new RLS policy allows it.
     if (data.user) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -76,7 +75,6 @@ export function useAuth() {
         
         if (profileError) {
             console.error("Error creating profile:", profileError);
-            // This is a critical error, you might want to handle it more gracefully
             return { error: profileError };
         }
     }
@@ -89,15 +87,16 @@ export function useAuth() {
   };
   
   const refreshCompany = async () => {
-    if(user) {
-        const { data: companyData } = await supabase.from('company_users').select('company_id').eq('user_id', user.id);
-        if (companyData && companyData.length > 0) {
-            setCompanyId(companyData[0].company_id);
-        } else {
-            setCompanyId(null);
-        }
-    }
+      if(user) {
+        const { data } = await supabase.from('company_users').select('company_id').eq('user_id', user.id).maybeSingle();
+        setCompanyId(data?.company_id || null);
+      }
   }
+  
+  // Role checking helpers
+  const isSuperAdmin = profile?.role === 'super_admin';
+  const isCompanyAdmin = profile?.role === 'company_admin';
+  const isManager = profile?.role === 'manager';
 
   return {
     user,
@@ -108,6 +107,10 @@ export function useAuth() {
     signUp,
     signOut,
     refreshCompany,
-    isSuperAdmin: profile?.role === 'super_admin',
+    isSuperAdmin,
+    isCompanyAdmin,
+    isManager,
+    canManageCompany: isSuperAdmin || isCompanyAdmin,
+    canCreateBookings: isSuperAdmin || isCompanyAdmin || isManager,
   };
 }
