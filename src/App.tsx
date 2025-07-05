@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthForm } from './components/AuthForm';
@@ -14,10 +12,10 @@ const Bookings = React.lazy(() => import('./pages/Bookings').then(module => ({ d
 const Calendar = React.lazy(() => import('./pages/Calendar').then(module => ({ default: module.Calendar })));
 const Settings = React.lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
 const Reports = React.lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
-const SuperAdmin = React.lazy(() => import('./pages/SuperAdmin').then(module => ({ default: module.SuperAdmin }))); // Lazy load SuperAdmin
+const SuperAdmin = React.lazy(() => import('./pages/SuperAdmin').then(module => ({ default: module.SuperAdmin })));
 
 function App() {
-  const { user, loading, companyId, userRole } = useAuth(); // Get userRole
+  const { user, loading, companyId, userRole } = useAuth();
 
   if (loading) {
     return (
@@ -30,67 +28,65 @@ function App() {
     );
   }
 
-  if (!user) {
-    return <AuthForm />;
-  }
-
-  // If the user is a super_admin, they don't need a companyId to proceed
-  if (!companyId && userRole !== 'super_admin') {
-    return <CompanySetup />;
-  }
-
   return (
     <Router>
       <Routes>
-        <Route path="/auth" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/" element={<Layout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="rooms" element={<Rooms />} />
-          <Route 
-            path="bookings" 
-            element={
-              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                <Bookings />
-              </React.Suspense>
-            } 
-          />
-          <Route 
-            path="calendar" 
-            element={
-              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                <Calendar />
-              </React.Suspense>
-            } 
-          />
-          <Route
-            path="reports"
-            element={
-              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                <Reports />
-              </React.Suspense>
-            }
-          />
-          <Route 
-            path="settings" 
-            element={
-              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                <Settings />
-              </React.Suspense>
-            } 
-          />
-          {/* Super Admin Route */}
-          {userRole === 'super_admin' && (
-            <Route
-              path="super-admin"
-              element={
-                <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                  <SuperAdmin />
-                </React.Suspense>
-              }
-            />
-          )}
-        </Route>
+        {!user ? (
+          <Route path="*" element={<AuthForm />} />
+        ) : !companyId && userRole !== 'super_admin' ? (
+          <Route path="*" element={<CompanySetup />} />
+        ) : (
+          <>
+            <Route path="/auth" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Layout />}>
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="rooms" element={<Rooms />} />
+              <Route
+                path="bookings"
+                element={
+                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                    <Bookings />
+                  </React.Suspense>
+                }
+              />
+              <Route
+                path="calendar"
+                element={
+                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                    <Calendar />
+                  </React.Suspense>
+                }
+              />
+              <Route
+                path="reports"
+                element={
+                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                    <Reports />
+                  </React.Suspense>
+                }
+              />
+              <Route
+                path="settings"
+                element={
+                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                    <Settings />
+                  </React.Suspense>
+                }
+              />
+              {userRole === 'super_admin' && (
+                <Route
+                  path="super-admin"
+                  element={
+                    <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                      <SuperAdmin />
+                    </React.Suspense>
+                  }
+                />
+              )}
+            </Route>
+          </>
+        )}
       </Routes>
     </Router>
   );
