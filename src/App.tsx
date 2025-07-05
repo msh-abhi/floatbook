@@ -14,7 +14,11 @@ const Settings = React.lazy(() => import('./pages/Settings').then(module => ({ d
 const Reports = React.lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
 const SuperAdmin = React.lazy(() => import('./pages/SuperAdmin').then(module => ({ default: module.SuperAdmin })));
 
-function App() {
+/**
+ * A component to handle the main application content,
+ * ensuring hooks are called consistently.
+ */
+function AppContent() {
   const { user, loading, companyId, userRole } = useAuth();
 
   if (loading) {
@@ -29,65 +33,77 @@ function App() {
   }
 
   return (
+    <Routes>
+      {!user ? (
+        <>
+          <Route path="/auth" element={<AuthForm />} />
+          <Route path="*" element={<Navigate to="/auth" replace />} />
+        </>
+      ) : !companyId && userRole !== 'super_admin' ? (
+        <>
+          <Route path="/setup" element={<CompanySetup />} />
+          <Route path="*" element={<Navigate to="/setup" replace />} />
+        </>
+      ) : (
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="rooms" element={<Rooms />} />
+          <Route 
+            path="bookings" 
+            element={
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                <Bookings />
+              </React.Suspense>
+            } 
+          />
+          <Route 
+            path="calendar" 
+            element={
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                <Calendar />
+              </React.Suspense>
+            } 
+          />
+          <Route
+            path="reports"
+            element={
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                <Reports />
+              </React.Suspense>
+            }
+          />
+          <Route 
+            path="settings" 
+            element={
+              <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                <Settings />
+              </React.Suspense>
+            } 
+          />
+          {userRole === 'super_admin' && (
+            <Route
+              path="super-admin"
+              element={
+                <React.Suspense fallback={<div className="p-8">Loading...</div>}>
+                  <SuperAdmin />
+                </React.Suspense>
+              }
+            />
+          )}
+           <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Route>
+      )}
+    </Routes>
+  );
+}
+
+function App() {
+  // The useAuth hook is now called inside AppContent, which is always rendered
+  // by the Router. This ensures a stable hook call order.
+  return (
     <Router>
-      <Routes>
-        {!user ? (
-          <Route path="*" element={<AuthForm />} />
-        ) : !companyId && userRole !== 'super_admin' ? (
-          <Route path="*" element={<CompanySetup />} />
-        ) : (
-          <>
-            <Route path="/auth" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/" element={<Layout />}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="rooms" element={<Rooms />} />
-              <Route
-                path="bookings"
-                element={
-                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                    <Bookings />
-                  </React.Suspense>
-                }
-              />
-              <Route
-                path="calendar"
-                element={
-                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                    <Calendar />
-                  </React.Suspense>
-                }
-              />
-              <Route
-                path="reports"
-                element={
-                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                    <Reports />
-                  </React.Suspense>
-                }
-              />
-              <Route
-                path="settings"
-                element={
-                  <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                    <Settings />
-                  </React.Suspense>
-                }
-              />
-              {userRole === 'super_admin' && (
-                <Route
-                  path="super-admin"
-                  element={
-                    <React.Suspense fallback={<div className="p-8">Loading...</div>}>
-                      <SuperAdmin />
-                    </React.Suspense>
-                  }
-                />
-              )}
-            </Route>
-          </>
-        )}
-      </Routes>
+      <AppContent />
     </Router>
   );
 }
