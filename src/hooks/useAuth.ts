@@ -63,18 +63,18 @@ export function useAuth() {
 
   const fetchUserCompanyAndRole = async (userId: string) => {
     try {
-      // Fetch both company and profile in one go
+      // Fetch both company and profile in one go - use maybeSingle() to handle cases where no rows exist
       const { data: companyUserData, error: companyUserError } = await supabase
         .from('company_users')
         .select('company_id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (companyUserError) console.error('Error fetching user company:', companyUserError.message);
       if (profileError) console.error('Error fetching user role:', profileError.message);
